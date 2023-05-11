@@ -17,11 +17,18 @@ class Exp:
 			'1': {'name': 'subjCode',
 				  'prompt': 'EXP_XXX',
 				  'options': 'any',
-				  'default': self.expName + '_001'}}
+				  'default': self.expName + '_001'},
+			'2': {'name': 'eyetracker',
+                   'prompt': '(yes / no)',
+                   'options': ("yes", "no"),
+                   'default': "yes",
+                   'type': str}}
 
 		[optionsReceived, self.subjVariables] = enterSubjInfo(self.expName, self.subjInfo)
-
+		
 		#TODO add variables to subInfo GUI instead of hard coding
+
+
 		self.subjVariables['mainMonitor'] = 1
 		self.disp = libscreen.Display(disptype='psychopy', fgc="black", bgc="black")
 		self.win = pygaze.expdisplay
@@ -51,6 +58,7 @@ class ExpPresentation(Exp):
 
 		# Load Trials
 		trialPath = 'trialOrders/BabyInfo_Ordertest.csv'
+		sampleTrialPath = 'sampleOrders/BabyInfo_SampleOrdertest.csv'
 		(self.trialListMatrix, self.trialFieldNames) = importTrials(trialPath, method="sequential")
 
 		print(self.trialListMatrix)
@@ -60,12 +68,12 @@ class ExpPresentation(Exp):
 
 		self.soundMatrix = loadFiles(self.experiment.moviePath, ['.mp3'], 'sound')
 		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png'], 'image',win = self.experiment.win)
-		print(self.imageMatrix)
-		#print(self.soundMatrix)
 
 		self.pos = {'bottomLeft': (-585, -251), 'bottomRight': (585, -251), 'centerLeft': (-585, 0),
 					'centerRight': (585, 0), 'topLeft': (-585, 251), 'topRight': (585, 251), 'center': (0, 0),
 					'left': (-250, -251), 'right': (250, -251)}
+
+
 
 		self.initialScreen = libscreen.Screen()
 		self.initialImageName = self.experiment.imagePath + "bunnies.gif"
@@ -96,8 +104,8 @@ class ExpPresentation(Exp):
 		y_size = target_image.size[1]
 		size_adjust = .5
 		# set image sizes
-		target_image.size = (x_size*size_adjust, y_size*size_adjust)
-		distractor_image.size = (x_size*size_adjust, y_size*size_adjust)
+		target_image.size = (250, 250)
+		distractor_image.size = (250, 250)
 		mov.size = (1024,768)
 		#mov.size = (mov.size[0]*.6, mov.size[1]*.6)
 		#pause the movie and sound on first frame
