@@ -98,7 +98,8 @@ class ExpPresentation(Exp):
 		# set image sizes
 		target_image.size = (x_size*size_adjust, y_size*size_adjust)
 		distractor_image.size = (x_size*size_adjust, y_size*size_adjust)
-		mov.size = (mov.size[0]*.6, mov.size[1]*.6)
+		mov.size = (1024,768)
+		#mov.size = (mov.size[0]*.6, mov.size[1]*.6)
 		#pause the movie and sound on first frame
 		mov.pause()
 		sound.pause()
