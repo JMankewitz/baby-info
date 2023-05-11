@@ -65,7 +65,7 @@ class ExpPresentation(Exp):
 
 		self.pos = {'bottomLeft': (-585, -251), 'bottomRight': (585, -251), 'centerLeft': (-585, 0),
 					'centerRight': (585, 0), 'topLeft': (-585, 251), 'topRight': (585, 251), 'center': (0, 0),
-					'left': (-585, -251), 'right': (585, -251)}
+					'left': (-250, -251), 'right': (250, -251)}
 
 		self.initialScreen = libscreen.Screen()
 		self.initialImageName = self.experiment.imagePath + "bunnies.gif"
@@ -94,11 +94,11 @@ class ExpPresentation(Exp):
 		distractor_image.pos = self.pos[distractor_location]
 		x_size = target_image.size[0]
 		y_size = target_image.size[1]
-		size_adjust = .75
+		size_adjust = .5
 		# set image sizes
 		target_image.size = (x_size*size_adjust, y_size*size_adjust)
 		distractor_image.size = (x_size*size_adjust, y_size*size_adjust)
-		mov.size = (mov.size[0]*.9, mov.size[1]*.9)
+		mov.size = (mov.size[0]*.6, mov.size[1]*.6)
 		#pause the movie and sound on first frame
 		mov.pause()
 		sound.pause()
@@ -133,7 +133,7 @@ class ExpPresentation(Exp):
 
 			#black screen for n seconds
 
-			trial_spacing = .5
+			trial_spacing = 0
 			#TODO: Fade instead of black screen? Is black screen too flashy?
 			core.wait(trial_spacing)
 
