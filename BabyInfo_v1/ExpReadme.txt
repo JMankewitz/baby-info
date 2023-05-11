@@ -39,3 +39,6 @@ Friday: gaze contingent trials
 
 Bonus: fade in and out
 
+
+Dolphin screen size: (1024,768)
+

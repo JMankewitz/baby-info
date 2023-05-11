@@ -1,9 +1,9 @@
 import os
 import pygaze
 import psychopy
-from pygaze import libscreen
-from pygaze import libinput
-
+from pygaze import libscreen, libinput, eyetracker
+from pygaze import plugins
+from pygaze.plugins import aoi
 from baseDefsPsychoPy import *
 from stimPresPyGaze import *
 from stimPresPsychoPy import *
@@ -24,16 +24,67 @@ class Exp:
                    'default': "yes",
                    'type': str}}
 
-		[optionsReceived, self.subjVariables] = enterSubjInfo(self.expName, self.subjInfo)
-		
-		#TODO add variables to subInfo GUI instead of hard coding
+		optionsReceived = False
+		fileOpened = False
 
+		# open data files to save while checking to make sure that no data is overwritten
+		while not fileOpened:
+			[optionsReceived, self.subjVariables] = enterSubjInfo(self.expName, self.subjInfo)
+			print(self.subjVariables)
+			constants.LOGFILENAME = constants.LOGFILEPATH + self.subjVariables['subjCode']
+			constants.LOGFILE = constants.LOGFILENAME[:]
+			from pygaze import settings
+			print(settings.LOGFILE)
+			print("Tracker type: " + constants.TRACKERTYPE)
+			if not optionsReceived:
+				popupError(self.subjVariables)
+
+			elif not os.path.isfile('data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt'):
+
+				# if using an eyetracker
+				if self.subjVariables['eyetracker'] == "yes":
+					# import eyetracking package from pygaze
+					from pygaze import eyetracker
+
+					if not os.path.isfile(constants.LOGFILE + '_TOBII_output.tsv'):
+						fileOpened = True
+						self.activeTrainingOutputFile = open(
+							'data/' + 'active_training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
+
+						self.trainingOutputFile = open('data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt',
+												   'w')
+						self. activeOutputFile = open(
+							'data/' + 'active_data_' + self.subjVariables['subjCode'] + '.txt',
+							'w')
+
+					else:
+						fileOpened = False
+						popupError(
+							'That subject code for the eyetracking data already exists! The prompt will now close!')
+						core.quit()
+				else:
+					fileOpened = True
+					self.trainingOutputFile = open(
+						'data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
+
+			else:
+				fileOpened = False
+				popupError('That subject code already exists!')
 
 		self.subjVariables['mainMonitor'] = 1
 		self.disp = libscreen.Display(disptype='psychopy', fgc="black", bgc="black")
 		self.win = pygaze.expdisplay
 
+		# Stim Paths
+		self.imagePath = self.path + '/stimuli/images/'
+		self.soundPath = self.path + '/stimuli/sounds/Ordertest/'
+		self.moviePath = self.path + '/stimuli/movies/Ordertest/'
+		self.imageExt = ['jpg', 'png', 'gif', 'jpeg']
+
 		# Inputs
+
+		if self.subjVariables['eyetracker'] == 'yes':
+			self.tracker = pygaze.eyetracker.EyeTracker(self.disp)
 
 		print("Using keyboard...")
 		self.inputDevice = "keyboard"
@@ -41,10 +92,8 @@ class Exp:
 		# create keyboard object
 		self.input = libinput.Keyboard(keylist=['space', 'enter', 'left', 'right'], timeout=None)
 
-		self.imagePath = self.path + '/stimuli/images/'
-		self.soundPath = self.path + '/stimuli/sounds/Ordertest/'
-		self.moviePath = self.path + '/stimuli/movies/Ordertest/'
-		self.imageExt = ['jpg', 'png', 'gif', 'jpeg']
+
+
 
 class ExpPresentation(Exp):
 	def __init__(self, experiment):
@@ -57,29 +106,77 @@ class ExpPresentation(Exp):
 		self.experiment.disp.show()
 
 		# Load Trials
-		trialPath = 'trialOrders/BabyInfo_Ordertest.csv'
-		sampleTrialPath = 'sampleOrders/BabyInfo_SampleOrdertest.csv'
-		(self.trialListMatrix, self.trialFieldNames) = importTrials(trialPath, method="sequential")
+		trainingTrialPath = 'orders/trialOrders/BabyInfo_Ordertest.csv'
+		activeTrainingTrialPath = 'orders/activeTrainingOrders/BabyInfo_ActiveTrainingOrdertest.csv'
+		activeTrialPath = 'orders/activeOrders/BabyInfo_ActiveOrdertest.csv'
+		(self.trialListMatrix, self.trialFieldNames) = importTrials(trainingTrialPath, method="sequential")
+		(self.activeTrainingTrialsMatrix, self.activeTrainingTrialFieldNames) = importTrials(activeTrainingTrialPath,
+																							 method="sequential")
+		(self.activeTrialsMatrix, self.activeTrialFieldNames) = importTrials(activeTrialPath, method="sequential")
 
 		print(self.trialListMatrix)
 
 		self.movieMatrix = loadFilesMovie(self.experiment.moviePath, ['mp4'], 'movie', self.experiment.win)
-		#print(self.movieMatrix)
 
 		self.soundMatrix = loadFiles(self.experiment.moviePath, ['.mp3'], 'sound')
 		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png'], 'image',win = self.experiment.win)
 
-		self.pos = {'bottomLeft': (-585, -251), 'bottomRight': (585, -251), 'centerLeft': (-585, 0),
-					'centerRight': (585, 0), 'topLeft': (-585, 251), 'topRight': (585, 251), 'center': (0, 0),
-					'left': (-250, -251), 'right': (250, -251)}
+		self.pos = {'bottomLeft': (-585, -251), 'bottomRight': (585, -251), 'centerLeft': (-256, 0),
+					'centerRight': (256, 0), 'topLeft': (-585, 251), 'topRight': (585, 251), 'center': (0, 0),
+					'left': (-256, -251), 'right': (256, -251)}
 
+		# Active sampling timing stuff
+		self.timeoutTime = 20000
+		self.aoiLeft = aoi.AOI('rectangle', pos = (-256, 0), size = (452, 646))
+		self.aoiRight = aoi.AOI('rectangle', pos= (256, 0), size=(452, 646))
 
+		#max seconds
+		self.countMax = 10
+		self.lookAwayPos = (-1024,-768)
+		self.labelTime = 1000
+		self.famCountMax = 0
 
+		# Build screens
+
+		# INITIAL SCREEN #
 		self.initialScreen = libscreen.Screen()
 		self.initialImageName = self.experiment.imagePath + "bunnies.gif"
 		initialImage = visual.ImageStim(self.experiment.win, self.initialImageName, mask=None, interpolate=True)
 		initialImage.setPos(self.pos['center'])
 		buildScreenPsychoPy(self.initialScreen, [initialImage])
+
+		# Active Screen(s) #
+		self.activeGrayScreenPrompt = libscreen.Screen(disptype='psychopy')
+		self.activeRightScreenPrompt = libscreen.Screen(
+			disptype='psychopy')
+		self.activeLeftScreenPrompt = libscreen.Screen(
+			disptype='psychopy')
+
+		# picture paths
+		self.leftSpeakerImageGrayName = self.experiment.imagePath + \
+										 self.activeTrainingTrialsMatrix.trialList[0]['leftImage'] + \
+										 '_grayscale.png'
+
+
+
+		self.activeTrainingScreen = libscreen.Screen(disptype='psychopy')
+		self.leftSpeakerImageColorName = self.experiment.imagePath + \
+									self.activeTrainingTrialsMatrix.trialList[0]['leftImage'] + \
+									'_color.png'
+		self.leftSpeakerImageColorName = self.experiment.imagePath + \
+									self.activeTrainingTrialsMatrix.trialList[0]['rightImage'] + \
+									'_color.png'
+		# psychopy stim
+		leftSpeakerColorImage = visual.ImageStim(self.experiment.win, self.leftSpeakerImageColorName, mask=None, interpolate=True)
+		rightSpeakerColorImage = visual.ImageStim(self.experiment.win, self.leftSpeakerImageColorName, mask=None, interpolate=True)
+		leftSpeakerColorImage.setPos(self.pos['centerLeft'])
+		rightSpeakerColorImage.setPos(self.pos['centerRight'])
+		self.leftAudioIntroduction = self.activeTrainingTrialsMatrix.trialList[0]['leftAudio']
+		self.rightAudioIntroduction = self.activeTrainingTrialsMatrix.trialList[0]['rightAudio']
+
+		buildScreenPsychoPy(self.activeTrainingScreen, [leftSpeakerColorImage, rightSpeakerColorImage])
+
+	# Active Sampling Test Screen #
 
 	def presentScreen(self, screen):
 		setAndPresentScreen(self.experiment.disp, screen)
@@ -129,6 +226,10 @@ class ExpPresentation(Exp):
 		# wait for n seconds
 		wait_time = 1
 		core.wait(wait_time)
+
+	def presentActiveTrial(self, curTrial):
+
+
 	def cycleThroughTrials(self):
 
 		curTrialIndex = 1
@@ -153,4 +254,4 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-currentPresentation.cycleThroughTrials()
+#currentPresentation.cycleThroughTrials()
