@@ -322,8 +322,7 @@ def loadFilesOld(directory, extension, fileType, win='', whichFiles='*', stimLis
 
 
 def sortDictValues(someDict, returnWhat='values'):
-	keys = someDict.keys()
-	keys.sort()
+	keys = sorted(someDict.keys())
 	if returnWhat == 'values':
 		return map(someDict.get, keys)
 	else:

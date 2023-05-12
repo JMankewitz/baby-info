@@ -41,4 +41,22 @@ Bonus: fade in and out
 
 
 Dolphin screen size: (1024,768)
+Size of images: (452, 646)
+
+
+4 Trial Types 
+
+1) Attention grabber (start, after active training, middle of familiarization, between active test?
+
+2) activeTraining (gaze contingent phase with just speakers going "hi baby!") 
+
+3) familiarizationTrials (speaker familiarization)
+
+4) activeTest (gaze contingent with novel object)
+
+
+Eyetracker should log:
+
+"Experiment %s subjCode %s Phase %sTrialNumber %d"
+
 
