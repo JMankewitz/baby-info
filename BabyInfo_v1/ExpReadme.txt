@@ -1,4 +1,8 @@
 
+Next Task: 
+
+Get regular eyetracking working with the training period - no contingent (contingent code is scary...)
+
 Broad Experiment Steps:
 
 - Load all packages
