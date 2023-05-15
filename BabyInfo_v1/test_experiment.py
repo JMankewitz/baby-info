@@ -138,8 +138,10 @@ class ExpPresentation(Exp):
 					'left': (-256, -251), 'right': (256, -251)}
 
 		# Active sampling timing stuff
-		self.timeoutTime = 2000
+		self.timeoutTime = 10000
 		self.aoiLeft = aoi.AOI('rectangle', pos = (-256, 0), size = (452, 646))
+
+		print(self.aoiLeft)
 		self.aoiRight = aoi.AOI('rectangle', pos= (256, 0), size=(452, 646))
 		self.ISI = 1000
 
@@ -370,25 +372,65 @@ class ExpPresentation(Exp):
 			audioStopTime_list = []
 			eventStartTime_list = []
 
-			if self.experiment.subjVariables['activeMode'] == "input":
-				if self.experiment.inputDevice == 'keyboard':
-					while libtime.get_time() - t0 < self.timeoutTime:
-						(response, presstime) = self.experiment.input.get_key(keylist = [self.experiment.validResponses['2'],
-																						 self.experiment.validResponses['3']],
-																			  timeout=self.timeoutTime)
-						if response != None:
+			while libtime.get_time() - t0 < self.timeoutTime:
+				if self.experiment.subjVariables['activeMode'] == 'gaze':
+					libtime.pause(10)
+					# get gaze position
+					curGazePos = self.experiment.tracker.sample()
+
+					####smoothing eyetracking sample###
+
+					# get current gaze position
+					curGazePos = self.experiment.tracker.sample()
+
+					# add cur gaze position to the list
+					last150ms.append(curGazePos)
+
+					# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
+					if len(last150ms) > 9:
+						del(last150ms[0])
+
+					# Now, remove the (no looking data) tuples
+					last150msClean = [e for e in last150ms if e != self.lookAwayPos]
+					# Now calculate the mean
+					if len(last150msClean) > 0:
+						# calculate mean
+						# looks a bit tricky, but that's jsut because I think the gaze positions are stored as tuples, which is a bit of an odd data structure.
+						gazepos = tuple(
+							map(lambda y: sum(y) / float(len(y)), zip(*last150msClean)))
+					else:
+						gazepos = self.lookAwayPos
+
+					if self.aoiLeft.contains(gazepos):
+						countLeft += 1
+						curLook = "left"
+					elif self.aoiRight.contains(gazepos):
+						countRight += 1
+						curLook = "right"
+					else:
+						curLook = "none"
+					print(gazepos)
+
+				elif self.experiment.subjVariables['activeMode'] == "input":
+					if self.experiment.inputDevice == 'keyboard':
+						while libtime.get_time() - t0 < self.timeoutTime:
+							(response, presstime) = self.experiment.input.get_key(keylist = [self.experiment.validResponses['2'],
+																							 self.experiment.validResponses['3']],
+																				  timeout=self.timeoutTime)
+							if response != None:
+								print(response)
+								if response == '2':
+									response = 'left'
+								elif response == '3':
+									response = 'right'
+
+							if response == 'left':
+								setAndPresentScreen(self.experiment.disp, self.activeLeftScreen)
+							elif response == 'right':
+								setAndPresentScreen(self.experiment.disp, self.activeRightScreen)
+
 							print(response)
-							if response == '2':
-								response = 'left'
-							elif response == '3':
-								response = 'right'
 
-						if response == 'left':
-							setAndPresentScreen(self.experiment.disp, self.activeLeftScreen)
-						elif response == 'right':
-							setAndPresentScreen(self.experiment.disp, self.activeRightScreen)
-
-						print(response)
 
 		elif stage == "test":
 			print("this is where the test stuff would be")
@@ -402,5 +444,5 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-#currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
-currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
+#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")

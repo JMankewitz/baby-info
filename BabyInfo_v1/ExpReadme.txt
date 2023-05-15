@@ -64,3 +64,8 @@ Eyetracker should log:
 "Experiment %s subjCode %s Phase %sTrialNumber %d"
 
 
+Todays goal:
+busywork!! 
+1) get AGs working
+2) full familiarization trials working
+
