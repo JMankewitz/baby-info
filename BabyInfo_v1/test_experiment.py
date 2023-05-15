@@ -148,8 +148,6 @@ class ExpPresentation(Exp):
 		# Active sampling timing stuff
 		self.timeoutTime = 10000
 		self.aoiLeft = aoi.AOI('rectangle', pos = (-256, 0), size = (452, 646))
-
-		print(self.aoiLeft)
 		self.aoiRight = aoi.AOI('rectangle', pos= (256, 0), size=(452, 646))
 		self.ISI = 1000
 
@@ -417,7 +415,7 @@ class ExpPresentation(Exp):
 						curLook = "right"
 					else:
 						curLook = "none"
-					print(gazepos)
+					print(curLook)
 
 				elif self.experiment.subjVariables['activeMode'] == "input":
 					if self.experiment.inputDevice == 'keyboard':
@@ -452,5 +450,5 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-#currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
+currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
 currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
