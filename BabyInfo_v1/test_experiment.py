@@ -131,11 +131,19 @@ class ExpPresentation(Exp):
 		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png'], 'image',win = self.experiment.win)
 
 		self.locations = ['left', 'right']
-		self.pos = {'bottomLeft': (-585, -251), 'bottomRight': (585, -251),
-					'centerLeft': (-256, 0), 'centerRight': (256, 0),
-					'topLeft': (-585, 251), 'topRight': (585, 251),
+
+		# dimensions MATH ugh
+
+		self.x_length = constants.DISPSIZE[0]
+		self.y_length = constants.DISPSIZE[1]
+		print(self.x_length, self.y_length)
+
+		self.pos = {'bottomLeft': (-self.x_length/4, -self.y_length/4), 'bottomRight': (self.x_length/4, -self.y_length/4),
+					'centerLeft': (-self.x_length/4, 0), 'centerRight': (self.x_length/4, 0),
+					'topLeft': (-self.x_length/4, self.y_length/4), 'topRight': (self.x_length/4, self.y_length/4),
 					'center': (0, 0),
-					'left': (-256, -251), 'right': (256, -251)}
+					'stimleft': (-self.x_length/4, -self.y_length/3), 'stimright': (self.x_length/4, -self.y_length/3),
+					}
 
 		# Active sampling timing stuff
 		self.timeoutTime = 10000
@@ -265,15 +273,15 @@ class ExpPresentation(Exp):
 		# set image locations
 		target_location = curTrial['TargetObjectPos']
 		distractor_location = curTrial['DistractorObjectPos']
-		target_image.pos = self.pos[target_location]
-		distractor_image.pos = self.pos[distractor_location]
+		target_image.pos = self.pos["stim"+target_location]
+		distractor_image.pos = self.pos["stim"+distractor_location]
 		x_size = target_image.size[0]
 		y_size = target_image.size[1]
 		size_adjust = .5
 		# set image sizes
 		target_image.size = (250, 250)
 		distractor_image.size = (250, 250)
-		mov.size = (1024, 768)
+		mov.size = (self.x_length, self.y_length)
 		#mov.size = (mov.size[0]*.6, mov.size[1]*.6)
 		#pause the movie and sound on first frame
 		mov.pause()
@@ -444,5 +452,5 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
-#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+#currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
+currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
