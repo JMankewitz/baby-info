@@ -92,6 +92,9 @@ class Exp:
 		if self.subjVariables['eyetracker'] == 'yes':
 			self.tracker = pygaze.eyetracker.EyeTracker(self.disp)
 
+		# TODO: Psychopy no longer reads both keyboard and mouse for some reason, need one or the other
+		# We will always use the keyboard to start the experiment, but it won't always be the main input
+		self.nextinput = libinput.Keyboard(keylist=['space', 'enter', 'left', 'right'], timeout=None)
 		if self.subjVariables['responseDevice'] == 'keyboard':
 			print("Using keyboard...")
 			self.inputDevice = "keyboard"
@@ -212,7 +215,7 @@ class ExpPresentation(Exp):
 
 	def presentScreen(self, screen):
 		setAndPresentScreen(self.experiment.disp, screen)
-		self.experiment.input.get_key()
+		self.experiment.nextinput.get_key()
 		self.experiment.disp.show()
 	def cycleThroughTrials(self, whichPart):
 
@@ -415,7 +418,7 @@ class ExpPresentation(Exp):
 						curLook = "right"
 					else:
 						curLook = "none"
-					print(curLook)
+					print(gazepos)
 
 				elif self.experiment.subjVariables['activeMode'] == "input":
 					if self.experiment.inputDevice == 'keyboard':
