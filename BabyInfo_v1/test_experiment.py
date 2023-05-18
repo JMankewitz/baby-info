@@ -416,7 +416,7 @@ class ExpPresentation(Exp):
 						curLook = "right"
 					else:
 						curLook = "none"
-					print(gazepos)
+					print(curLook)
 
 				elif self.experiment.subjVariables['activeMode'] == "input":
 					if self.experiment.inputDevice == 'keyboard':
