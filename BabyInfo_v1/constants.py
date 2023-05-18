@@ -13,7 +13,7 @@ DUMMYMODE = True # False for gaze contingent display, True for dummy mode (using
 # but not the constant's names
 SCREENNR = 1 # number of the screen used for displaying experiment
 DISPTYPE = 'psychopy' # either 'psychopy' or 'pygame'
-DISPSIZE = (1920,1080) # canvas size
+DISPSIZE = (1024,768) # canvas size
 #SCREENSIZE = (34.5, 19.7) # physical display size in cm
 MOUSEVISIBLE = False # mouse visibility
 #BGC = (125,125,125) # backgroundcolour

@@ -142,7 +142,7 @@ class ExpPresentation(Exp):
 		print(self.x_length, self.y_length)
 
 		self.pos = {'bottomLeft': (-self.x_length/4, -self.y_length/4), 'bottomRight': (self.x_length/4, -self.y_length/4),
-					'centerLeft': (-self.x_length/4, 0), 'centerRight': (self.x_length/4, 0),
+					'centerLeft': (-256, 0), 'centerRight': (256, 0),
 					'topLeft': (-self.x_length/4, self.y_length/4), 'topRight': (self.x_length/4, self.y_length/4),
 					'center': (0, 0),
 					'stimleft': (-self.x_length/4, -self.y_length/3), 'stimright': (self.x_length/4, -self.y_length/3),
@@ -150,8 +150,9 @@ class ExpPresentation(Exp):
 
 		# Active sampling timing stuff
 		self.timeoutTime = 10000
-		self.aoiLeft = aoi.AOI('rectangle', pos = (-256, 0), size = (452, 646))
-		self.aoiRight = aoi.AOI('rectangle', pos= (256, 0), size=(452, 646))
+		#TODO: Starting without a buffer
+		self.aoiLeft = aoi.AOI('rectangle', pos = (81, 134), size = (350, 500))
+		self.aoiRight = aoi.AOI('rectangle', pos= (593, 134), size=(350, 500))
 		self.ISI = 1000
 
 		#max seconds
@@ -276,14 +277,11 @@ class ExpPresentation(Exp):
 		distractor_location = curTrial['DistractorObjectPos']
 		target_image.pos = self.pos["stim"+target_location]
 		distractor_image.pos = self.pos["stim"+distractor_location]
-		x_size = target_image.size[0]
-		y_size = target_image.size[1]
-		size_adjust = .5
+
 		# set image sizes
 		target_image.size = (250, 250)
 		distractor_image.size = (250, 250)
 		mov.size = (self.x_length, self.y_length)
-		#mov.size = (mov.size[0]*.6, mov.size[1]*.6)
 		#pause the movie and sound on first frame
 		mov.pause()
 		curSound.pause()
