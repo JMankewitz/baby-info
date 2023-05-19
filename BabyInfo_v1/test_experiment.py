@@ -6,6 +6,7 @@ from baseDefsPsychoPy import *
 from stimPresPyGaze import *
 from stimPresPsychoPy import *
 import constants
+import tobii_research as tr
 
 class Exp:
 	def __init__(self):
@@ -93,8 +94,11 @@ class Exp:
 		# Inputs
 
 		if self.subjVariables['eyetracker'] == 'yes':
+			self.eyetrackers = tr.find_all_eyetrackers()
+			print(self.eyetrackers[0])
+
 			self.tracker = pygaze.eyetracker.EyeTracker(self.disp)
-			print("Eyetracker connected?" + str(self.tracker.connected()))
+			print("Eyetracker connected? " + str(self.tracker.connected()))
 
 		# We will always use the keyboard to start the experiment, but it won't always be the main input
 		if self.subjVariables['responseDevice'] == 'keyboard':
