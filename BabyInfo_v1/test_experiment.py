@@ -1,3 +1,4 @@
+import psychopy.hardware.keyboard
 import pygaze
 from pygaze import libscreen, libinput, eyetracker
 from pygaze.plugins import aoi
@@ -79,11 +80,13 @@ class Exp:
 
 		self.subjVariables['mainMonitor'] = 1
 		self.disp = libscreen.Display(disptype='psychopy', fgc="black", bgc="black")
+		self.blackScreen = libscreen.Screen(fgc="black", bgc="black")
 		self.win = pygaze.expdisplay
 
 		# Stim Paths
 		self.imagePath = self.path + '/stimuli/images/'
-		self.soundPath = self.path + '/stimuli/sounds/Ordertest/'
+		self.soundPath = self.path + '/stimuli/movies/Ordertest/'
+		self.activeSoundPath = self.path + '/stimuli/sounds/sampleAudio/'
 		self.moviePath = self.path + '/stimuli/movies/Ordertest/'
 		self.imageExt = ['jpg', 'png', 'gif', 'jpeg']
 
@@ -94,7 +97,6 @@ class Exp:
 
 		# TODO: Psychopy no longer reads both keyboard and mouse for some reason, need one or the other
 		# We will always use the keyboard to start the experiment, but it won't always be the main input
-		self.nextinput = libinput.Keyboard(keylist=['space', 'enter', 'left', 'right'], timeout=None)
 		if self.subjVariables['responseDevice'] == 'keyboard':
 			print("Using keyboard...")
 			self.inputDevice = "keyboard"
@@ -130,7 +132,8 @@ class ExpPresentation(Exp):
 		(self.activeTestTrialsMatrix, self.activeTrialFieldNames) = importTrials(activeTestTrialPath, method="sequential")
 
 		self.movieMatrix = loadFilesMovie(self.experiment.moviePath, ['mp4'], 'movie', self.experiment.win)
-		self.soundMatrix = loadFiles(self.experiment.moviePath, ['.mp3'], 'sound')
+		self.soundMatrix = loadFiles(self.experiment.soundPath, ['.mp3'], 'sound')
+		self.activeSoundMatrix = loadFiles(self.experiment.activeSoundPath, ['.mp3'], 'sound')
 		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png'], 'image',win = self.experiment.win)
 
 		self.locations = ['left', 'right']
@@ -149,7 +152,7 @@ class ExpPresentation(Exp):
 					}
 
 		# Active sampling timing stuff
-		self.timeoutTime = 10000
+		self.timeoutTime = 20000
 		#TODO: Starting without a buffer
 		self.aoiLeft = aoi.AOI('rectangle', pos = (81, 134), size = (350, 500))
 		self.aoiRight = aoi.AOI('rectangle', pos= (593, 134), size=(350, 500))
@@ -216,8 +219,9 @@ class ExpPresentation(Exp):
 
 	def presentScreen(self, screen):
 		setAndPresentScreen(self.experiment.disp, screen)
-		self.experiment.nextinput.get_key()
+		self.experiment.input.get_key()
 		self.experiment.disp.show()
+
 	def cycleThroughTrials(self, whichPart):
 
 		curActiveTrainingIndex = 1
@@ -226,17 +230,13 @@ class ExpPresentation(Exp):
 		if whichPart == "familiarizationPhase":
 			for curTrial in self.familTrialListMatrix.trialList:
 				print(curTrial)
+				if curTrial['trialType'] == "training":
+					self.presentTrial(curTrial, curFamilTrialIndex, stage = "familiarization", getInput = "no")
 
-				self.presentTrial(curTrial, curFamilTrialIndex, stage = "familiarization", getInput = "no")
-
-				self.experiment.win.flip()
-
-				# black screen for n seconds
-
-				trial_spacing = 0
-				# TODO: Fade instead of black screen? Is black screen too flashy?
-				libtime.pause(trial_spacing)
-
+					self.experiment.win.flip()
+				if curTrial['trialType'] == 'AG':
+					self.presentAGTrial(curTrial, getInput = "no", duration = curTrial['AGTime'])
+					self.experiment.win.flip()
 				curFamilTrialIndex += 1
 
 		elif whichPart == "sampleTraining":
@@ -247,6 +247,73 @@ class ExpPresentation(Exp):
 
 		elif whichPart == "sampleTest":
 			print("This part would be the active sampling Test")
+
+	def presentAGTrial(self, curTrial, getInput, duration):
+
+		# flip screen
+		self.experiment.disp.fill(self.experiment.blackScreen)
+		self.experiment.disp.show()
+
+		# pause for duration of ISI
+		libtime.pause(self.ISI)
+
+		if curTrial['AGType'] == "image":
+			# create picture
+			curPic = self.pictureMatrix[curTrial['AGImage']][0]
+			# position in center of screen
+			curPic.pos = self.pos['center']
+			# create screen
+			agScreen = libscreen.Screen()
+			# build screen
+			buildScreenPsychoPy(agScreen, [curPic])
+
+			# present screen
+			# see stimPresPyGaze to see details on setAndPresentScreen
+			# basically, it simply fills the display with the specified screen (setting) and then flips (shows) the screen (presenting)
+			setAndPresentScreen(self.experiment.disp, agScreen)
+			if self.experiment.subjVariables['eyetracker'] == "yes":
+				# log event
+				self.experiment.tracker.log("presentImage")
+
+			if curTrial['AGAudio'] != "none":
+				playAndWait(self.soundMatrix[curTrial['AGAudio']], waitFor=0)
+
+				if self.experiment.subjVariables['eyetracker'] == "yes":
+					# log event
+					self.experiment.tracker.log("presentAudio")
+
+			# display for rest of ag Time
+			libtime.pause(duration)
+
+		elif curTrial['AGType'] == "movie":
+			# load movie stim
+			# mov = visual.MovieStim3(self.experiment.win, self.experiment.moviePath+curTrial['AGVideo'] )
+			mov = self.movieMatrix[curTrial['AGVideo']]
+			#mov.loadMovie(self.experiment.moviePath + curTrial['AGVideo'] + self.movieExt)
+			mov.size = (self.x_length, self.y_length)
+
+			if curTrial['AGAudio'] != "none":
+				playAndWait(self.soundMatrix[curTrial['AGAudio']], waitFor=0)
+				if self.experiment.subjVariables['eyetracker'] == "yes":
+					# log event
+					self.experiment.tracker.log("presentAudio")
+
+			if self.experiment.subjVariables['eyetracker'] == "yes":
+				# log event
+				self.experiment.tracker.log("presentMovie")
+
+			while mov.status != visual.FINISHED:
+				mov.draw()
+				mov.draw()
+				self.experiment.win.flip()
+
+		# if getInput=True, wait for keyboard press before advancing
+		if getInput == "yes":
+			self.experiment.input.get_key()
+
+		self.experiment.disp.fill(self.experiment.blackScreen)
+
+	# self.experiment.win2.flip(clearBuffer=True)
 
 	def presentTrial(self, curTrial, curTrialIndex, stage, getInput):
 
@@ -269,18 +336,14 @@ class ExpPresentation(Exp):
 		#grab correct movie, sound, and images
 		mov = self.movieMatrix[curTrial['video']]
 		curSound = self.soundMatrix[curTrial['video']]
-		target_image = self.imageMatrix[curTrial['TargetImage']][0]
-		distractor_image = self.imageMatrix[curTrial['DistractorImage']][0]
-
-		# set image locations
-		target_location = curTrial['TargetObjectPos']
-		distractor_location = curTrial['DistractorObjectPos']
-		target_image.pos = self.pos["stim"+target_location]
-		distractor_image.pos = self.pos["stim"+distractor_location]
+		left_image = self.imageMatrix[curTrial['leftImage']][0]
+		left_image.pos = self.pos['stimleft']
+		right_image = self.imageMatrix[curTrial['rightImage']][0]
+		right_image.pos = self.pos['stimright']
 
 		# set image sizes
-		target_image.size = (250, 250)
-		distractor_image.size = (250, 250)
+		left_image.size = (250, 250)
+		right_image.size = (250, 250)
 		mov.size = (self.x_length, self.y_length)
 		#pause the movie and sound on first frame
 		mov.pause()
@@ -298,13 +361,12 @@ class ExpPresentation(Exp):
 
 		while mov.status != visual.FINISHED:
 			mov.draw()
-			target_image.draw()
-			distractor_image.draw()
+			left_image.draw()
+			right_image.draw()
 			self.experiment.win.flip()
 
 		if mov.status == visual.FINISHED:
 			mov.pause()
-
 		#TODO: Code this depending on video length
 
 		end_time = 1
@@ -383,8 +445,6 @@ class ExpPresentation(Exp):
 				if self.experiment.subjVariables['activeMode'] == 'gaze':
 					libtime.pause(10)
 					# get gaze position
-					curGazePos = self.experiment.tracker.sample()
-
 					####smoothing eyetracking sample###
 
 					# get current gaze position
@@ -408,35 +468,137 @@ class ExpPresentation(Exp):
 					else:
 						gazepos = self.lookAwayPos
 
-					if self.aoiLeft.contains(gazepos):
-						countLeft += 1
-						curLook = "left"
-					elif self.aoiRight.contains(gazepos):
-						countRight += 1
-						curLook = "right"
-					else:
-						curLook = "none"
-					print(curLook)
-
 				elif self.experiment.subjVariables['activeMode'] == "input":
 					if self.experiment.inputDevice == 'keyboard':
-						while libtime.get_time() - t0 < self.timeoutTime:
-							(response, presstime) = self.experiment.input.get_key(keylist = [self.experiment.validResponses['2'],
+						response = self.experiment.input.get_key(keyList = [self.experiment.validResponses['2'],
 																							 self.experiment.validResponses['3']],
-																				  timeout=self.timeoutTime)
-							if response != None:
-								print(response)
-								if response == '2':
-									response = 'left'
-								elif response == '3':
-									response = 'right'
+																				  clear = True)
+						print(response)
+						if response != None:
+							if response == '2':
+								response = 'left'
+							elif response == '3':
+								response = 'right'
 
-							if response == 'left':
-								setAndPresentScreen(self.experiment.disp, self.activeLeftScreen)
-							elif response == 'right':
-								setAndPresentScreen(self.experiment.disp, self.activeRightScreen)
+						if response == 'left':
+							gazepos = (256, 384)
+						elif response == 'right':
+							gazepos = (768, 384)
+						else:
+							gazepos = self.lookAwayPos
 
-							print(response)
+				if self.aoiLeft.contains(gazepos):
+					countLeft += 1
+					curLook = "left"
+				elif self.aoiRight.contains(gazepos):
+					countRight += 1
+					curLook = "right"
+				else:
+					curLook = "none"
+				print(curLook)
+
+				if eventTriggered == 1:
+					firstTrigger = 0
+				elif eventTriggered == 0:
+					if countLeft > self.countMax:
+						selectionNum += 1
+						eventTriggered =1
+						if firstTrigger == 0:
+							firstTrigger = 1
+
+						eventTriggerTime = libtime.get_time()
+						eventStartTime_list.append(eventTriggerTime)
+						rt = eventTriggerTime - t0
+						rt_list.append(rt)
+
+						#log event
+						if self.experiment.subjVariables['eyetracker'] == 'yes':
+							self.experiment.tracker.log("selection"+str(selectionNum))
+						selectionTime = libtime.get_time()
+						gazeCon = True
+						contingent = True
+						response = "left"
+						response_list.append(response)
+					elif countRight > self.countMax:
+						selectionNum += 1
+						eventTriggered = 1
+						if firstTrigger == 0:
+							firstTrigger = 1
+
+						eventTriggerTime = libtime.get_time()
+						eventStartTime_list.append(eventTriggerTime)
+						rt = eventTriggerTime - t0
+						rt_list.append(rt)
+
+						# log event
+						if self.experiment.subjVariables['eyetracker'] == 'yes':
+							self.experiment.tracker.log("selection" + str(selectionNum))
+						selectionTime = libtime.get_time()
+						gazeCon = True
+						contingent = True
+						response = "right"
+						response_list.append(response)
+
+				if firstTrigger == 1:
+					chosenImage = curTrial[response+"Image"]
+					chosenAudio = curTrial[response+'Audio']
+					chosenImage_list.append(chosenImage)
+					chosenAudio_list.append(chosenAudio)
+					if response == "left":
+						setAndPresentScreen(self.experiment.disp, self.activeLeftScreen)
+					if response == "right":
+						setAndPresentScreen(self.experiment.disp, self.activeRightScreen)
+
+					# Start audio
+
+					self.activeSoundMatrix[chosenAudio].setLoops(-1)
+					print(self.activeSoundMatrix[chosenAudio].loops)
+					playAndWait(self.activeSoundMatrix[chosenAudio], waitFor=0)
+					audioTime = libtime.get_time()
+					audioStartTime_list.append(audioTime)
+					if self.experiment.subjVariables['eyetracker'] == "yes":
+						# log audio event
+						self.experiment.tracker.log("audio" + str(selectionNum))
+
+				if eventTriggered == 1:
+					#check if the infant has switched
+					if curLook != response and libtime.get_time()-audioTime > self.labelTime:
+						countLeft = 0
+						countRight = 0
+						gazeCon = False
+						contingent = False
+						eventTriggered = 0
+						firstTrigger = 0
+						#stop sound
+						self.activeSoundMatrix[chosenAudio].stop()
+						audioStopTime = libtime.get_time()
+						audioPlayTime_list.append(audioStopTime-audioTime)
+						audioStopTime_list.append(audioStopTime)
+
+						#reset screen
+						setAndPresentScreen(self.experiment.disp, self.activeGrayScreen)
+						if self.experiment.subjVariables['eyetracker'] == "yes":
+							# log audio event end
+							self.experiment.tracker.log(
+								"audioEnd" + str(selectionNum))
+			if eventTriggered == 1:
+				# stop sound
+				self.activeSoundMatrix[chosenAudio].stop()
+				audioStopTime = libtime.get_time()
+				audioPlayTime_list.append(audioStopTime - audioTime)
+				audioStopTime_list.append(audioStopTime)
+
+			self.experiment.disp.show()
+
+			trialTimerEnd = libtime.get_time()
+			# trial time
+			trialTime = trialTimerEnd - trialTimerStart
+			if self.experiment.subjVariables['eyetracker'] == "yes":
+				# stop eye tracking
+				self.experiment.tracker.stop_recording()
+
+
+
 
 
 		elif stage == "test":
@@ -447,7 +609,6 @@ currentExp = Exp()
 
 
 currentPresentation = ExpPresentation(currentExp)
-
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
