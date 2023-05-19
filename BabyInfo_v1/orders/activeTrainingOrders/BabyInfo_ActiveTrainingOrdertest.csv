@@ -1,2 +1,2 @@
 ﻿trialType,trialID,blockID,speaker,speakerPos,leftImage,rightImage,leftAudio,rightAudio,trialDuration,trialStartSilence,trialEndSilence,AG,AGType,AGImage,AGAudio,AGVideo,AGTime,AGgetInput,AGWidth,AGHeight
-sampleTraining,1,1,exp1,left,exp1,exp2,exp1_hibabyletsplay,exp2_hibabyhowfun,5000,0,0,0,,,,,,,,
+sampleTraining,1,1,exp1,left,exp1,exp2,exp1_hibabywow,exp2_hibabyhowfun,5000,0,0,0,,,,,,,,
