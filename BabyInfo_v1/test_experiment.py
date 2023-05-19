@@ -94,8 +94,8 @@ class Exp:
 
 		if self.subjVariables['eyetracker'] == 'yes':
 			self.tracker = pygaze.eyetracker.EyeTracker(self.disp)
+			print("Eyetracker connected?" + str(self.tracker.connected()))
 
-		# TODO: Psychopy no longer reads both keyboard and mouse for some reason, need one or the other
 		# We will always use the keyboard to start the experiment, but it won't always be the main input
 		if self.subjVariables['responseDevice'] == 'keyboard':
 			print("Using keyboard...")
