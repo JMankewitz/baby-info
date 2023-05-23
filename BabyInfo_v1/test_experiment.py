@@ -163,8 +163,8 @@ class ExpPresentation(Exp):
 		self.ISI = 1000
 
 		#max seconds
-		self.countMax = 10
-		self.lookAwayPos = (-1024,-768)
+		self.countMax = 20
+		self.lookAwayPos = (-1,-1)
 		self.labelTime = 1000
 		self.famCountMax = 0
 
@@ -458,15 +458,18 @@ class ExpPresentation(Exp):
 					last150ms.append(curGazePos)
 
 					# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
-					if len(last150ms) > 9:
+					# TODO: Check in pilot
+					if len(last150ms) > 60:
 						del(last150ms[0])
 
 					# Now, remove the (no looking data) tuples
+					print("curGazePos: " + str(curGazePos))
 					last150msClean = [e for e in last150ms if e != self.lookAwayPos]
+
 					# Now calculate the mean
 					if len(last150msClean) > 0:
 						# calculate mean
-						# looks a bit tricky, but that's jsut because I think the gaze positions are stored as tuples, which is a bit of an odd data structure.
+						# looks a bit tricky, but that's just because I think the gaze positions are stored as tuples, which is a bit of an odd data structure.
 						gazepos = tuple(
 							map(lambda y: sum(y) / float(len(y)), zip(*last150msClean)))
 					else:
@@ -499,14 +502,15 @@ class ExpPresentation(Exp):
 					curLook = "right"
 				else:
 					curLook = "none"
-				print(curLook)
+				print("gazepos: " + str(gazepos))
+				#print("Left: " + str(countLeft) + " Right: " + str(countRight))
 
 				if eventTriggered == 1:
 					firstTrigger = 0
 				elif eventTriggered == 0:
 					if countLeft > self.countMax:
 						selectionNum += 1
-						eventTriggered =1
+						eventTriggered = 1
 						if firstTrigger == 0:
 							firstTrigger = 1
 
@@ -556,7 +560,6 @@ class ExpPresentation(Exp):
 					# Start audio
 
 					self.activeSoundMatrix[chosenAudio].setLoops(-1)
-					print(self.activeSoundMatrix[chosenAudio].loops)
 					playAndWait(self.activeSoundMatrix[chosenAudio], waitFor=0)
 					audioTime = libtime.get_time()
 					audioStartTime_list.append(audioTime)
@@ -566,7 +569,9 @@ class ExpPresentation(Exp):
 
 				if eventTriggered == 1:
 					#check if the infant has switched
-					if curLook != response and libtime.get_time()-audioTime > self.labelTime:
+					#maybe add some different smoothing here?
+					print("curLook: " + str(curLook))
+					if curLook != response and libtime.get_time() - audioTime > self.labelTime:
 						countLeft = 0
 						countRight = 0
 						gazeCon = False
