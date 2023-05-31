@@ -53,9 +53,9 @@ class Exp:
 			print(self.subjVariables)
 			print(constants.LOGFILEPATH + self.subjVariables['subjCode'])
 			constants.LOGFILENAME = constants.LOGFILEPATH + self.subjVariables['subjCode']
-			constants.LOGFILE = constants.LOGFILENAME[:]
+			constants.LOGFILE = constants.LOGFILENAME
 			from pygaze import settings
-			print(constants.LOGFILENAME)
+			print(constants.LOGFILE)
 			print("Tracker type: " + constants.TRACKERTYPE)
 			if not optionsReceived:
 				popupError(self.subjVariables)
@@ -67,7 +67,7 @@ class Exp:
 					# import eyetracking package from pygaze
 					from pygaze import eyetracker
 
-					if not os.path.isfile(constants.LOGFILE + '_TOBII_output.tsv'):
+					if not os.path.isfile(constants.LOGFILENAME + '_TOBII_output.tsv'):
 						fileOpened = True
 						self.activeTrainingOutputFile = open(
 							'data/' + 'active_training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
@@ -153,7 +153,7 @@ class ExpPresentation(Exp):
 		self.soundMatrix = loadFiles(self.experiment.soundPath, ['.mp3'], 'sound')
 		self.AGsoundMatrix = loadFiles(self.experiment.AGPath, ['.mp3'], 'sound')
 		self.activeSoundMatrix = loadFiles(self.experiment.activeSoundPath, ['.mp3'], 'sound')
-		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png'], 'image',win = self.experiment.win)
+		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png'], 'image', win = self.experiment.win)
 
 		self.locations = ['left', 'right']
 
@@ -164,16 +164,20 @@ class ExpPresentation(Exp):
 		print(self.x_length, self.y_length)
 
 		self.pos = {'bottomLeft': (-256, 0), 'bottomRight': (256, 0),
-					'centerLeft': (-256, 0), 'centerRight': (256, 0),
-					'topLeft': (-self.x_length/4, self.y_length/4), 'topRight': (self.x_length/4, self.y_length/4),
+					'centerLeft': (-322, 0), 'centerRight': (322, 0),
+					'topLeft': (-self.x_length/4, self.y_length/4),
+					'topRight': (self.x_length/4, self.y_length/4),
 					'center': (0, 0),
-					'stimleft': (-self.x_length/4, -self.y_length/3), 'stimright': (self.x_length/4, -self.y_length/3),
+					'sampleStimLeft': (-322, -116),
+					'sampleStimRight': (322, -116),
+					'stimleft': (-256, -181),
+					'stimright': (256, -181)
 					}
 
 		# Active sampling timing stuff
-		self.timeoutTime = 20000
-		self.aoiLeft = aoi.AOI('rectangle', pos = (81, 134), size = (350, 500))
-		self.aoiRight = aoi.AOI('rectangle', pos= (593, 134), size=(350, 500))
+		self.timeoutTime = 10000
+		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 160), size = (355, 450))
+		self.aoiRight = aoi.AOI('rectangle', pos= (668, 160), size=(355, 450))
 		self.ISI = 1000
 		self.startSilence = 0
 		self.endSilence = 0
@@ -274,7 +278,7 @@ class ExpPresentation(Exp):
 			# mov = visual.MovieStim3(self.experiment.win, self.experiment.moviePath+curTrial['AGVideo'] )
 			mov = self.AGmovieMatrix[curTrial['AGVideo']]
 			#mov.loadMovie(self.experiment.moviePath + curTrial['AGVideo'] + self.movieExt)
-			#mov.size = (self.x_length, self.y_length)
+			mov.size = (1024, 560)
 
 			if curTrial['AGAudio'] != "none":
 				playAndWait(self.AGsoundMatrix[curTrial['AGAudio']], waitFor=0)
@@ -325,9 +329,9 @@ class ExpPresentation(Exp):
 		right_image.pos = self.pos['stimright']
 
 		# set image sizes
-		left_image.size = (250, 250)
-		right_image.size = (250, 250)
-		#mov.size = (self.x_length, self.y_length)
+		left_image.size = (200, 200)
+		right_image.size = (200, 200)
+		mov.size = (1024, 560)
 
 		#load sound until window flip for latency
 
@@ -397,13 +401,19 @@ class ExpPresentation(Exp):
 		# Left
 		self.leftSpeakerGrayImage = self.imageMatrix[leftSpeakerImageGrayName][0]
 		self.leftSpeakerGrayImage.setPos(self.pos['centerLeft'])
+		self.leftSpeakerGrayImage.size = (280, 400)
+
 		self.leftSpeakerColorImage = self.imageMatrix[leftSpeakerImageColorName][0]
 		self.leftSpeakerColorImage.setPos(self.pos['centerLeft'])
+		self.leftSpeakerColorImage.size = (280, 400)
 		# Right
 		self.rightSpeakerGrayImage = self.imageMatrix[rightSpeakerImageGrayName][0]
 		self.rightSpeakerGrayImage.setPos(self.pos['centerRight'])
+		self.rightSpeakerGrayImage.size = (280, 400)
+
 		self.rightSpeakerColorImage = self.imageMatrix[rightSpeakerImageColorName][0]
 		self.rightSpeakerColorImage.setPos(self.pos['centerRight'])
+		self.rightSpeakerColorImage.size = (280, 400)
 
 		self.leftAudioIntroduction = self.activeTrainingTrialsMatrix.trialList[0]['leftAudio']
 		self.rightAudioIntroduction = self.activeTrainingTrialsMatrix.trialList[0]['rightAudio']
@@ -436,14 +446,21 @@ class ExpPresentation(Exp):
 			# Find Psychopy Stim from image matrix
 			# Left
 			self.leftNovelGrayImage = self.imageMatrix[leftNovelImageGrayName][0]
-			self.leftNovelGrayImage.setPos(self.pos['bottomLeft'])
+			self.leftNovelGrayImage.setPos(self.pos['sampleStimLeft'])
+			self.leftNovelGrayImage.size = (150, 130)
+
 			self.leftNovelColorImage = self.imageMatrix[leftNovelImageColorName][0]
-			self.leftNovelColorImage.setPos(self.pos['bottomLeft'])
+			self.leftNovelColorImage.setPos(self.pos['sampleStimLeft'])
+			self.leftNovelColorImage.size = (150, 130)
+
 			# Right
 			self.rightNovelGrayImage = self.imageMatrix[rightNovelImageGrayName][0]
-			self.rightNovelGrayImage.setPos(self.pos['bottomRight'])
+			self.rightNovelGrayImage.setPos(self.pos['sampleStimRight'])
+			self.rightNovelGrayImage.size = (150, 130)
+
 			self.rightNovelColorImage = self.imageMatrix[rightNovelImageColorName][0]
-			self.rightNovelColorImage.setPos(self.pos['bottomRight'])
+			self.rightNovelColorImage.setPos(self.pos['sampleStimRight'])
+			self.rightNovelColorImage.size = (150, 130)
 
 			# TODO: if this works append color images to active color screens
 			self.activeGrayScreen.screen.append(self.rightNovelGrayImage)
