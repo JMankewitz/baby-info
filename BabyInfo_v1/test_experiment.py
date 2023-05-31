@@ -6,7 +6,10 @@ from baseDefsPsychoPy import *
 from stimPresPyGaze import *
 from stimPresPsychoPy import *
 import constants
-import tobii_research as tr
+#import tobii_research as tr
+
+from psychopy import logging
+logging.console.setLevel(logging.CRITICAL)
 
 from psychopy import logging
 logging.console.setLevel(logging.CRITICAL)
@@ -104,8 +107,8 @@ class Exp:
 		# Inputs
 
 		if self.subjVariables['eyetracker'] == 'yes':
-			self.eyetrackers = tr.find_all_eyetrackers()
-			print(self.eyetrackers[0])
+			#self.eyetrackers = tr.find_all_eyetrackers()
+			#print(self.eyetrackers[0])
 
 			self.tracker = pygaze.eyetracker.EyeTracker(self.disp)
 			print("Eyetracker connected? " + str(self.tracker.connected()))
@@ -422,23 +425,6 @@ class ExpPresentation(Exp):
 		buildScreenPsychoPy(self.activeLeftScreen, [self.leftSpeakerColorImage, self.rightSpeakerGrayImage])
 		buildScreenPsychoPy(self.activeRightScreen, [self.leftSpeakerGrayImage, self.rightSpeakerColorImage])
 
-<<<<<<< Updated upstream
-					# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
-					# TODO: Check in pilot
-					if len(last150ms) > 60:
-						del(last150ms[0])
-
-					# Now, remove the (no looking data) tuples
-					print("curGazePos: " + str(curGazePos))
-					last150msClean = [e for e in last150ms if e != self.lookAwayPos]
-
-					# Now calculate the mean
-					if len(last150msClean) > 0:
-						# calculate mean
-						# looks a bit tricky, but that's just because I think the gaze positions are stored as tuples, which is a bit of an odd data structure.
-						gazepos = tuple(
-							map(lambda y: sum(y) / float(len(y)), zip(*last150msClean)))
-=======
 		if stage == "test":
 
 			# Load correct novel images
@@ -487,13 +473,15 @@ class ExpPresentation(Exp):
 
 		setAndPresentScreen(self.experiment.disp, self.activeColorScreen)
 
-
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
 			self.experiment.tracker.log("startScreen")
-
+		# pause for non-contingent color display
 		libtime.pause(1000)
+
+		#start contingent
 		setAndPresentScreen(self.experiment.disp, self.activeGrayScreen)
+
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
 			self.experiment.tracker.log("startContingent")
@@ -522,6 +510,7 @@ class ExpPresentation(Exp):
 		eventStartTime_list = []
 
 		while libtime.get_time() - t0 < self.timeoutTime:
+
 			if self.experiment.subjVariables['activeMode'] == 'gaze':
 				libtime.pause(10)
 				# get gaze position
@@ -564,7 +553,6 @@ class ExpPresentation(Exp):
 						gazepos = (256, 384)
 					elif response == 'right':
 						gazepos = (768, 384)
->>>>>>> Stashed changes
 					else:
 						gazepos = self.lookAwayPos
 
@@ -578,112 +566,6 @@ class ExpPresentation(Exp):
 				curLook = "none"
 			print(curLook)
 
-<<<<<<< Updated upstream
-						if response == 'left':
-							gazepos = (256, 384)
-						elif response == 'right':
-							gazepos = (768, 384)
-						else:
-							gazepos = self.lookAwayPos
-
-				if self.aoiLeft.contains(gazepos):
-					countLeft += 1
-					curLook = "left"
-				elif self.aoiRight.contains(gazepos):
-					countRight += 1
-					curLook = "right"
-				else:
-					curLook = "none"
-				print("gazepos: " + str(gazepos))
-				#print("Left: " + str(countLeft) + " Right: " + str(countRight))
-
-				if eventTriggered == 1:
-					firstTrigger = 0
-				elif eventTriggered == 0:
-					if countLeft > self.countMax:
-						selectionNum += 1
-						eventTriggered = 1
-						if firstTrigger == 0:
-							firstTrigger = 1
-
-						eventTriggerTime = libtime.get_time()
-						eventStartTime_list.append(eventTriggerTime)
-						rt = eventTriggerTime - t0
-						rt_list.append(rt)
-
-						#log event
-						if self.experiment.subjVariables['eyetracker'] == 'yes':
-							self.experiment.tracker.log("selection"+str(selectionNum))
-						selectionTime = libtime.get_time()
-						gazeCon = True
-						contingent = True
-						response = "left"
-						response_list.append(response)
-					elif countRight > self.countMax:
-						selectionNum += 1
-						eventTriggered = 1
-						if firstTrigger == 0:
-							firstTrigger = 1
-
-						eventTriggerTime = libtime.get_time()
-						eventStartTime_list.append(eventTriggerTime)
-						rt = eventTriggerTime - t0
-						rt_list.append(rt)
-
-						# log event
-						if self.experiment.subjVariables['eyetracker'] == 'yes':
-							self.experiment.tracker.log("selection" + str(selectionNum))
-						selectionTime = libtime.get_time()
-						gazeCon = True
-						contingent = True
-						response = "right"
-						response_list.append(response)
-
-				if firstTrigger == 1:
-					chosenImage = curTrial[response+"Image"]
-					chosenAudio = curTrial[response+'Audio']
-					chosenImage_list.append(chosenImage)
-					chosenAudio_list.append(chosenAudio)
-					if response == "left":
-						setAndPresentScreen(self.experiment.disp, self.activeLeftScreen)
-					if response == "right":
-						setAndPresentScreen(self.experiment.disp, self.activeRightScreen)
-
-					# Start audio
-
-					self.activeSoundMatrix[chosenAudio].setLoops(-1)
-					playAndWait(self.activeSoundMatrix[chosenAudio], waitFor=0)
-					audioTime = libtime.get_time()
-					audioStartTime_list.append(audioTime)
-					if self.experiment.subjVariables['eyetracker'] == "yes":
-						# log audio event
-						self.experiment.tracker.log("audio" + str(selectionNum))
-
-				if eventTriggered == 1:
-					#check if the infant has switched
-					#maybe add some different smoothing here?
-					print("curLook: " + str(curLook))
-					if curLook != response and libtime.get_time() - audioTime > self.labelTime:
-						countLeft = 0
-						countRight = 0
-						gazeCon = False
-						contingent = False
-						eventTriggered = 0
-						firstTrigger = 0
-						#stop sound
-						self.activeSoundMatrix[chosenAudio].stop()
-						audioStopTime = libtime.get_time()
-						audioPlayTime_list.append(audioStopTime-audioTime)
-						audioStopTime_list.append(audioStopTime)
-
-						#reset screen
-						setAndPresentScreen(self.experiment.disp, self.activeGrayScreen)
-						if self.experiment.subjVariables['eyetracker'] == "yes":
-							# log audio event end
-							self.experiment.tracker.log(
-								"audioEnd" + str(selectionNum))
-=======
->>>>>>> Stashed changes
 			if eventTriggered == 1:
 				firstTrigger = 0
 			elif eventTriggered == 0:
