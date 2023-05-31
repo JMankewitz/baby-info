@@ -1,3 +1,12 @@
-﻿trialType,trialID,blockID,speakerExp,speakerType,speakerPos,TargetImage,TargetObjectPos,DistractorImage,DistractorObjectPos,video,trialDuration,trialStartSilence,trialEndSilence,AG,AGType,AGImage,AGAudio,AGVideo,AGTime,AGgetInput,AGWidth,AGHeight
-training,1,1,exp1,reliable,left,ball,right,car,left,exp1_left_see_ball,5000,0,0,0,,,,,,,,
-training,2,1,exp2,unreliable,right,truck,left,apple,right,exp2_right_find_dog,5000,0,0,0,,,,,,,,
+﻿trialType,trialID,blockID,speakerType,speakerExp,speakerPos,leftImage,rightImage,label,video,trialDuration,trialStartSilence,trialEndSilence,AG,AGType,AGImage,AGAudio,AGVideo,AGTime,AGgetInput,AGWidth,AGHeight
+AG,1,,,,,,,,,,,,1,movie,,kaleidoscope,kaleidoscope,5000,,,
+training,2,1,reliable,exp1,left,ball,car,see_ball,exp1_left_see_ball,5000,,,,,,,,,,,
+training,3,1,unreliable,exp2,right,truck,apple,find_dog,exp2_right_find_dog,5000,,,,,,,,,,,
+training,4,1,reliable,exp1,left,shoe,book,wheres_book,exp1_left_wheres_book,5000,,,,,,,,,,,
+training,5,1,unreliable,exp2,right,duck,bear,look_train,exp2_right_look_train,5000,,,,,,,,,,,
+AG,6,,,,,,,,,,,,1,movie,,BouncyBalls,BouncyBalls,5000,,,
+training,7,2,unreliable,exp2,right,ball,car,find_hat,exp2_right_find_hat,5000,,,,,,,,,,,
+training,8,2,reliable,exp1,left,truck,apple,look_apple,exp1_left_look_apple,5000,,,,,,,,,,,
+training,9,2,unreliable,exp2,right,shoe,book,see_cat,exp2_right_see_cat,5000,,,,,,,,,,,
+training,10,2,reliable,exp1,left,duck,bear,look_duck,exp1_left_look_duck,5000,,,,,,,,,,,
+AG,11,,,,,,,,,,,,1,movie,,Balloons,Balloons,5000,,,

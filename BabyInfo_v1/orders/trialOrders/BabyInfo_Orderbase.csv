@@ -1,0 +1,12 @@
+﻿trialType,trialID,blockID,speakerType,speakerExp,speakerPos,leftImage,rightImage,label,video,trialDuration,trialStartSilence,trialEndSilence,AG,AGType,AGImage,AGAudio,AGVideo,AGTime,AGgetInput,AGWidth,AGHeight
+AG,1,,,,,,,,,,,,1,movie,,kaleidoscope,kaleidoscope,5000,,,
+training,2,1,reliable,,,ball,car,see_ball,,5000,,,,,,,,,,,
+training,3,1,unreliable,,,truck,apple,find_dog,,5000,,,,,,,,,,,
+training,4,1,reliable,,,shoe,book,where_book,,5000,,,,,,,,,,,
+training,5,1,unreliable,,,duck,bear,look_train,,5000,,,,,,,,,,,
+AG,6,,,,,,,,,,,,1,movie,,BouncyBalls,BouncyBalls,5000,,,
+training,7,2,unreliable,,,ball,car,find_hat,,5000,,,,,,,,,,,
+training,8,2,reliable,,,truck,apple,look_apple,,5000,,,,,,,,,,,
+training,9,2,unreliable,,,shoe,book,see_cat,,5000,,,,,,,,,,,
+training,10,2,reliable,,,duck,bear,where_duck,,5000,,,,,,,,,,,
+AG,11,,,,,,,,,,,,1,movie,,Balloons,Balloons,5000,,,
