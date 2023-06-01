@@ -1,0 +1,81 @@
+---
+title: "pilot_analysis"
+author: "Jess Mankewitz"
+date: "2023-06-01"
+output: html_document
+---
+
+This will outline the intended analysis of my FYP project "BabyInfo", which explores how toddlers may or may not actively sample informative speakers in their environment. 
+
+# Setup
+
+```{r}
+library(here)
+library(tidyverse)
+
+source("Pygaze_processGazeData.R")
+source("Pygaze_addAOIHits.R")
+source("Pygaze_InterpolateAOIHits.R")
+
+eyetracking_data_path <- here("BabyInfo_v1/eyetrackingData/")
+trials_path <- here('BabyInfo_v1/data/')
+```
+
+# Adult Testing 
+
+## Preprocess Data Files
+
+```{r}
+adult_testing_folder <- 'adult_testing/'
+adult_testing_data_path <- paste0(eyetracking_data_path, adult_testing_folder)
+
+
+
+gazeDataNames = list.files(adult_testing_data_path, pattern=".tsv", full.names = T)
+
+first_file = gazeDataNames[1]
+
+gazeDataComplete = c()
+
+d_raw = read_tsv(first_file, skip = 7)
+
+
+
+
+#rowNumTrialStart = as.numeric(rownames(d[grepl("time_stamp",d_raw$time_stamp),]))
+d_raw$TimeStamp=suppressWarnings(as.numeric(as.character(d_raw$TimeStamp)))
+
+d_raw$GazePointXLeft=suppressWarnings(as.numeric(as.character(d_raw$GazePointXLeft)))
+d_raw$GazePointYLeft=suppressWarnings(as.numeric(as.character(d_raw$GazePointYLeft)))
+d_raw$ValidityLeft=suppressWarnings(as.numeric(as.character(d_raw$ValidityLeft)))
+d_raw$GazePointXRight=suppressWarnings(as.numeric(as.character(d_raw$GazePointXRight)))
+d_raw$GazePointYRight=suppressWarnings(as.numeric(as.character(d_raw$GazePointYRight)))
+d_raw$ValidityRight=suppressWarnings(as.numeric(as.character(d_raw$ValidityRight)))
+d_raw$GazePointX=suppressWarnings(as.numeric(as.character(d_raw$GazePointX)))
+d_raw$GazePointY=suppressWarnings(as.numeric(as.character(d_raw$GazePointY)))
+
+d_raw$Event=as.character(d_raw$Event)
+
+
+d <- d_raw |> janitor::clean_names()
+
+# TODO: uniform the logging details for each trial start instead of having different information in the familiarization vs sampling trials
+
+# TODO: For now, split into different dataframes 
+
+# Wrangle event logging to get experiment phases and trial numbers
+
+d_event_logging <- d |> filter(!is.na(event))
+
+# split off real logging events and event data columns
+
+d_event_logging$trial_info <- grepl("TrialNumber",d_event_logging$event)
+
+d_event_logging <- d_event_logging |> 
+  mutate(trial_data = ifelse(grepl("TrialNumber", event), event, NA))
+
+
+```
+
+
+# Pilot 1

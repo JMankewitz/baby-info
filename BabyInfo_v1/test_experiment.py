@@ -11,9 +11,6 @@ import constants
 from psychopy import logging
 logging.console.setLevel(logging.CRITICAL)
 
-from psychopy import logging
-logging.console.setLevel(logging.CRITICAL)
-
 class Exp:
 	def __init__(self):
 		self.expName = "TestExp"
@@ -244,6 +241,15 @@ class ExpPresentation(Exp):
 
 		# pause for duration of ISI
 		libtime.pause(self.ISI)
+		if self.experiment.subjVariables['eyetracker'] == "yes":
+			self.experiment.tracker.start_recording()
+			logData = "Experiment %s subjCode %s" % (
+			self.experiment.expName, self.experiment.subjVariables['subjCode'])
+
+			for field in self.trialFieldNames:
+				logData += " "+field+" "+str(curTrial[field])
+			#print("would have logged " + logData)
+			self.experiment.tracker.log(logData)
 
 		if curTrial['AGType'] == "image":
 			# create picture
@@ -298,6 +304,10 @@ class ExpPresentation(Exp):
 		# if getInput=True, wait for keyboard press before advancing
 		if getInput == "yes":
 			self.experiment.input.get_key()
+
+		if self.experiment.subjVariables['eyetracker'] == "yes":
+			# stop eye tracking
+			self.experiment.tracker.stop_recording()
 
 		self.experiment.disp.fill(self.experiment.blackScreen)
 
