@@ -6,7 +6,7 @@ from baseDefsPsychoPy import *
 from stimPresPyGaze import *
 from stimPresPsychoPy import *
 import constants
-#import tobii_research as tr
+import tobii_research as tr
 
 from psychopy import logging
 logging.console.setLevel(logging.CRITICAL)
@@ -64,7 +64,7 @@ class Exp:
 					# import eyetracking package from pygaze
 					from pygaze import eyetracker
 
-					if not os.path.isfile(constants.LOGFILENAME + '_TOBII_output.tsv'):
+					if not os.path.isfile(constants.LOGFILENAME + 'testAdult_TOBII_output.tsv'):
 						fileOpened = True
 						self.activeTrainingOutputFile = open(
 							'data/' + 'active_training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
@@ -104,8 +104,13 @@ class Exp:
 		# Inputs
 
 		if self.subjVariables['eyetracker'] == 'yes':
-			#self.eyetrackers = tr.find_all_eyetrackers()
-			#print(self.eyetrackers[0])
+
+
+			self.eyetrackers = tr.find_all_eyetrackers()
+
+			while len(self.eyetrackers) == 0:
+				print("trying to find eyetracker...")
+				self.eyetrackers = tr.find_all_eyetrackers()
 
 			self.tracker = pygaze.eyetracker.EyeTracker(self.disp)
 			print("Eyetracker connected? " + str(self.tracker.connected()))
