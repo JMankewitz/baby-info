@@ -13,7 +13,7 @@ logging.console.setLevel(logging.CRITICAL)
 
 class Exp:
 	def __init__(self):
-		self.expName = "TestExp"
+		self.expName = "BabyInfo"
 		self.path = os.getcwd()
 		self.subjInfo = {
 			'1': {'name': 'subjCode',
@@ -48,11 +48,12 @@ class Exp:
 		while not fileOpened:
 			[optionsReceived, self.subjVariables] = enterSubjInfo(self.expName, self.subjInfo)
 			print(self.subjVariables)
-			print(constants.LOGFILEPATH + self.subjVariables['subjCode'])
-			constants.LOGFILENAME = constants.LOGFILEPATH + self.subjVariables['subjCode']
-			constants.LOGFILE = constants.LOGFILENAME
+
 			from pygaze import settings
 			print(constants.LOGFILE)
+			settings.LOGFILE = constants.LOGFILEPATH + self.subjVariables['subjCode']
+			print("settings logfile: " + settings.LOGFILE)
+
 			print("Tracker type: " + constants.TRACKERTYPE)
 			if not optionsReceived:
 				popupError(self.subjVariables)
@@ -64,7 +65,7 @@ class Exp:
 					# import eyetracking package from pygaze
 					from pygaze import eyetracker
 
-					if not os.path.isfile(constants.LOGFILENAME + 'testAdult_TOBII_output.tsv'):
+					if not os.path.isfile(constants.LOGFILENAME + '_TOBII_output.tsv'):
 						fileOpened = True
 						self.activeTrainingOutputFile = open(
 							'data/' + 'active_training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
