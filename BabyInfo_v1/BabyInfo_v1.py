@@ -95,9 +95,12 @@ class Exp:
 		self.win = pygaze.expdisplay
 		# Stim Paths
 		self.imagePath = self.path + '/stimuli/images/'
-		self.soundPath = self.path + '/stimuli/movies/Order' + self.subjVariables['order'] +'/'
+		#self.soundPath = self.path + '/stimuli/movies/Order' + self.subjVariables['order'] +'/'
+		self.soundPath = self.path + '/stimuli/movies/OrderAll/'
+
 		self.activeSoundPath = self.path + '/stimuli/sounds/sampleAudio/'
-		self.moviePath = self.path + '/stimuli/movies/Order' + self.subjVariables['order'] +'/'
+		#self.moviePath = self.path + '/stimuli/movies/Order' + self.subjVariables['order'] +'/'
+		self.moviePath = self.path + '/stimuli/movies/OrderAll/'
 		self.AGPath = self.path + '/stimuli/movies/AGStims/'
 		self.imageExt = ['jpg', 'png', 'gif', 'jpeg']
 
@@ -709,6 +712,7 @@ class ExpPresentation(Exp):
 		# win.flip()
 
 		curStar = self.stars['0'][0]
+		curStar.size = (self.x_length, self.y_length)
 		# create screen
 		endScreen = libscreen.Screen()
 		# build screen
@@ -724,22 +728,25 @@ class ExpPresentation(Exp):
 			# self.stars[str(i)][0].draw()
 			#  win.flip()
 			curStar = self.stars[str(i)][0]
+			curStar.size = (self.x_length, self.y_length)
 			# build screen
 			buildScreenPsychoPy(endScreen, [curStar])
 			# present screen
 			setAndPresentScreen(self.experiment.disp, endScreen)
 
-			self.sounds['ding'].play()
-			core.wait(.5)
+			self.AGsoundMatrix['ding'].play()
+			core.wait(.75)
+			self.AGsoundMatrix['ding'].stop()
 
 		# have the stars jiggle
-		self.sounds['applause'].play()
-		self.sounds['done'].play()
+		self.AGsoundMatrix['applause'].play()
+		self.AGsoundMatrix['done'].play()
 
 		for i in range(4):
 			# self.stars['5'][0].draw()
 			# win.flip()
 			curStar = self.stars['5'][0]
+			curStar.size = (self.x_length, self.y_length)
 			# build screen
 			buildScreenPsychoPy(endScreen, [curStar])
 			# present screen
@@ -750,6 +757,7 @@ class ExpPresentation(Exp):
 			# win.flip()
 
 			curStar = self.stars['5_left'][0]
+			curStar.size = (self.x_length, self.y_length)
 			# build screen
 			buildScreenPsychoPy(endScreen, [curStar])
 			# present screen
@@ -764,6 +772,7 @@ class ExpPresentation(Exp):
 			# core.wait(.5)
 
 			curStar = self.stars['5'][0]
+			curStar.size = (self.x_length, self.y_length)
 			# build screen
 			buildScreenPsychoPy(endScreen, [curStar])
 			# present screen
@@ -774,6 +783,7 @@ class ExpPresentation(Exp):
 			# win.flip()
 
 			curStar = self.stars['5_right'][0]
+			curStar.size = (self.x_length, self.y_length)
 			# build screen
 			buildScreenPsychoPy(endScreen, [curStar])
 			# present screen
@@ -787,6 +797,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-#currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
+currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
 currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
 currentPresentation.cycleThroughTrials(whichPart = "sampleTest")
+currentPresentation.EndDisp()
