@@ -390,6 +390,7 @@ class ExpPresentation(Exp):
 		trialTime = trialTimerEnd - trialTimerStart
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# stop eye tracking
+			self.experiment.tracker.log("stopRecording")
 			self.experiment.tracker.stop_recording()
 
 		self.experiment.disp.fill()
