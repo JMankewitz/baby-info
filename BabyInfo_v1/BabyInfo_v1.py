@@ -20,22 +20,47 @@ class Exp:
 				  'prompt': 'EXP_XXX',
 				  'options': 'any',
 				  'default': self.expName + '_001'},
-			'2': {'name': 'order',
+			'2': {'name': 'sex',
+				  'prompt': 'Subject sex m/f: ',
+				  'options': ("m","f"),
+				  'default': '',
+				  'type' : str},
+			'3' : {	'name' : 'age',
+					   'prompt' : 'Subject Age: ',
+					   'options' : 'any',
+					   'default':'',
+					   'type' : str},
+			'4': {'name': 'order',
                    'prompt': '(test / 1 / 2 / 3 / 4)',
                    'options': ("test", "1", "2", "3", "4"),
                    'default': "test",
                    'type': str},
-			'3': {'name': 'eyetracker',
+			'5' : {'name' : 'expInitials',
+				   'prompt' : 'Experimenter Initials: ',
+				   'options' : 'any',
+				   'default' : '',
+				   'type' : str},
+			'6': {	'name' : 'mainMonitor',
+					  'prompt' : 'Screen Index (0,1,2,3): ',
+					  'options' : (0,1,2,3),
+					  'default': 2,
+					  'type' : int},
+			'7': {	'name' : 'sideMonitor',
+					  'prompt' : 'Screen Index (0,1,2,3): ',
+					  'options' : (0,1,2,3),
+					  'default': 1,
+					  'type' : int},
+			'8': {'name': 'eyetracker',
                    'prompt': '(yes / no)',
                    'options': ("yes", "no"),
                    'default': "yes",
                    'type': str},
-			'4': {'name': 'activeMode',
+			'9': {'name': 'activeMode',
 				  'prompt': 'input / gaze',
 				  'options': ("input", "gaze"),
 				  'default': "input",
 				  'type': str},
-			'5': {'name': 'responseDevice',
+			'10': {'name': 'responseDevice',
 				  'prompt': 'keyboard / mouse',
 				  'options': ("keyboard", "mouse"),
 				  'default': 'keyboard'}
@@ -65,7 +90,7 @@ class Exp:
 					# import eyetracking package from pygaze
 					from pygaze import eyetracker
 
-					if not os.path.isfile(constants.LOGFILENAME + '_TOBII_output.tsv'):
+					if not os.path.isfile(settings.LOGFILE + '_TOBII_output.tsv'):
 						fileOpened = True
 						self.activeTrainingOutputFile = open(
 							'data/' + 'active_training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
@@ -82,6 +107,7 @@ class Exp:
 							'That subject code for the eyetracking data already exists! The prompt will now close!')
 						core.quit()
 				else:
+					#if eyetracker is no, only track the training output
 					fileOpened = True
 					self.trainingOutputFile = open(
 						'data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
@@ -90,8 +116,7 @@ class Exp:
 				fileOpened = False
 				popupError('That subject code already exists!')
 
-		self.subjVariables['mainMonitor'] = 1
-		self.disp = libscreen.Display(disptype='psychopy', fgc="black", bgc="black")
+		self.disp = libscreen.Display(disptype='psychopy', fgc="black", bgc="black", screennr=self.subjVariables['mainMonitor'])
 		self.blackScreen = libscreen.Screen(fgc="black", bgc="black")
 		self.win = pygaze.expdisplay
 		# Stim Paths
@@ -109,11 +134,12 @@ class Exp:
 
 		if self.subjVariables['eyetracker'] == 'yes':
 
-
+			attempts = 0
 			self.eyetrackers = tr.find_all_eyetrackers()
 
-			while len(self.eyetrackers) == 0:
+			while len(self.eyetrackers) == 0 and attempts < 50:
 				print("trying to find eyetracker...")
+				attempts += 1
 				self.eyetrackers = tr.find_all_eyetrackers()
 
 			self.tracker = pygaze.eyetracker.EyeTracker(self.disp)
@@ -187,7 +213,7 @@ class ExpPresentation(Exp):
 		self.aoiRight = aoi.AOI('rectangle', pos= (668, 160), size=(355, 450))
 		self.ISI = 1000
 		self.startSilence = 0
-		self.endSilence = 0
+		self.endSilence = 1000
 
 		#max seconds
 		self.countMax = 20
@@ -277,14 +303,14 @@ class ExpPresentation(Exp):
 			setAndPresentScreen(self.experiment.disp, agScreen)
 			if self.experiment.subjVariables['eyetracker'] == "yes":
 				# log event
-				self.experiment.tracker.log("presentImage")
+				self.experiment.tracker.log("presentAGImage")
 
 			if curTrial['AGAudio'] != "none":
 				playAndWait(self.soundMatrix[curTrial['AGAudio']], waitFor=0)
 
 				if self.experiment.subjVariables['eyetracker'] == "yes":
 					# log event
-					self.experiment.tracker.log("presentAudio")
+					self.experiment.tracker.log("presentAGAudio")
 
 			# display for rest of ag Time
 			libtime.pause(duration)
@@ -300,11 +326,11 @@ class ExpPresentation(Exp):
 				playAndWait(self.AGsoundMatrix[curTrial['AGAudio']], waitFor=0)
 				if self.experiment.subjVariables['eyetracker'] == "yes":
 					# log event
-					self.experiment.tracker.log("presentAudio")
+					self.experiment.tracker.log("presentAGAudio")
 
 			if self.experiment.subjVariables['eyetracker'] == "yes":
 				# log event
-				self.experiment.tracker.log("presentMovie")
+				self.experiment.tracker.log("presentAGMovie")
 
 			while mov.status != visual.FINISHED:
 				mov.draw()
@@ -317,6 +343,7 @@ class ExpPresentation(Exp):
 
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# stop eye tracking
+			self.experiment.tracker.log("endAG")
 			self.experiment.tracker.stop_recording()
 
 		self.experiment.disp.fill(self.experiment.blackScreen)
@@ -390,7 +417,11 @@ class ExpPresentation(Exp):
 		trialTime = trialTimerEnd - trialTimerStart
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# stop eye tracking
+<<<<<<< HEAD
 			self.experiment.tracker.log("stopRecording")
+=======
+			self.experiment.tracker.log("endScreen")
+>>>>>>> b5f5279... add more logging
 			self.experiment.tracker.stop_recording()
 
 		self.experiment.disp.fill()
@@ -704,6 +735,7 @@ class ExpPresentation(Exp):
 		trialTime = trialTimerEnd - trialTimerStart
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# stop eye tracking
+			self.experiment.tracker.log("stopScreen")
 			self.experiment.tracker.stop_recording()
 
 
