@@ -208,7 +208,7 @@ class ExpPresentation(Exp):
 					}
 
 		# Active sampling timing stuff
-		self.timeoutTime = 10000
+		self.timeoutTime = 20000
 		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 160), size = (355, 450))
 		self.aoiRight = aoi.AOI('rectangle', pos= (668, 160), size=(355, 450))
 		self.ISI = 1000
@@ -221,7 +221,7 @@ class ExpPresentation(Exp):
 		self.labelTime = 1000
 		self.famCountMax = 0
 
-		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)
+		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)ra and dasha
 
 		# INITIAL SCREEN #
 		self.initialScreen = libscreen.Screen()
@@ -417,11 +417,7 @@ class ExpPresentation(Exp):
 		trialTime = trialTimerEnd - trialTimerStart
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# stop eye tracking
-<<<<<<< HEAD
-			self.experiment.tracker.log("stopRecording")
-=======
 			self.experiment.tracker.log("endScreen")
->>>>>>> b5f5279... add more logging
 			self.experiment.tracker.stop_recording()
 
 		self.experiment.disp.fill()
