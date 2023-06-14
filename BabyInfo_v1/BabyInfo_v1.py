@@ -5,6 +5,7 @@ from pygaze.plugins import aoi
 from baseDefsPsychoPy import *
 from stimPresPyGaze import *
 from stimPresPsychoPy import *
+from psychopy.constants import STARTED, PLAYING
 import constants
 import tobii_research as tr
 
@@ -215,11 +216,10 @@ class ExpPresentation(Exp):
 		self.startSilence = 0
 		self.endSilence = 1000
 
-		#max seconds
-		self.countMax = 20
+		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
+		self.sampleThreshold = 20
 		self.lookAwayPos = (-1,-1)
-		self.labelTime = 1000
-		self.famCountMax = 0
+		self.labelTime = 10000
 
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)ra and dasha
 
@@ -511,7 +511,6 @@ class ExpPresentation(Exp):
 			self.rightNovelColorImage.setPos(self.pos['sampleStimRight'])
 			self.rightNovelColorImage.size = (150, 130)
 
-			# TODO: if this works append color images to active color screens
 			self.activeGrayScreen.screen.append(self.rightNovelGrayImage)
 			self.activeGrayScreen.screen.append(self.leftNovelGrayImage)
 
@@ -578,15 +577,13 @@ class ExpPresentation(Exp):
 		while libtime.get_time() - t0 < self.timeoutTime:
 
 			if self.experiment.subjVariables['activeMode'] == 'gaze':
-				libtime.pause(10)
 				# get gaze position
 				####smoothing eyetracking sample###
-
-				# get current gaze position
-				curGazePos = self.experiment.tracker.sample()
+				# get current sampled gaze position
+				sampledGazePos = self.experiment.tracker.sample()
 
 				# add cur gaze position to the list
-				last150ms.append(curGazePos)
+				last150ms.append(sampledGazePos)
 
 				# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
 				if len(last150ms) > 9:
@@ -597,7 +594,6 @@ class ExpPresentation(Exp):
 				# Now calculate the mean
 				if len(last150msClean) > 0:
 					# calculate mean
-					# looks a bit tricky, but that's jsut because I think the gaze positions are stored as tuples, which is a bit of an odd data structure.
 					gazepos = tuple(
 						map(lambda y: sum(y) / float(len(y)), zip(*last150msClean)))
 				else:
@@ -608,7 +604,7 @@ class ExpPresentation(Exp):
 					response = self.experiment.input.get_key(keyList=[self.experiment.validResponses['2'],
 																	  self.experiment.validResponses['3']],
 															 clear=True)
-					print(response)
+					#print(response)
 					if response != None:
 						if response == '2':
 							response = 'left'
@@ -628,14 +624,20 @@ class ExpPresentation(Exp):
 			elif self.aoiRight.contains(gazepos):
 				countRight += 1
 				curLook = "right"
+			elif gazepos == self.lookAwayPos:
+				curLook = "away"
 			else:
 				curLook = "none"
-			print(curLook)
+			#print(curLook)
 
+			# If an event has already been triggered, it can not be the first trigger
 			if eventTriggered == 1:
 				firstTrigger = 0
+
+			# If an event is not currently triggered, start an event and record selection
 			elif eventTriggered == 0:
-				if countLeft > self.countMax:
+
+				if countLeft > self.sampleThreshold:
 					selectionNum += 1
 					eventTriggered = 1
 					if firstTrigger == 0:
@@ -648,13 +650,14 @@ class ExpPresentation(Exp):
 
 					# log event
 					if self.experiment.subjVariables['eyetracker'] == 'yes':
-						self.experiment.tracker.log("selection" + str(selectionNum))
+						self.experiment.tracker.log("selection" + str(selectionNum) + "    " + curLook)
 					selectionTime = libtime.get_time()
 					gazeCon = True
 					contingent = True
 					response = "left"
 					response_list.append(response)
-				elif countRight > self.countMax:
+
+				elif countRight > self.sampleThreshold:
 					selectionNum += 1
 					eventTriggered = 1
 					if firstTrigger == 0:
@@ -667,7 +670,7 @@ class ExpPresentation(Exp):
 
 					# log event
 					if self.experiment.subjVariables['eyetracker'] == 'yes':
-						self.experiment.tracker.log("selection" + str(selectionNum))
+						self.experiment.tracker.log("selection" + str(selectionNum) + "    " + curLook)
 					selectionTime = libtime.get_time()
 					gazeCon = True
 					contingent = True
@@ -688,7 +691,8 @@ class ExpPresentation(Exp):
 
 				self.activeSoundMatrix[chosenAudio].setLoops(-1)
 				print(self.activeSoundMatrix[chosenAudio].loops)
-				playAndWait(self.activeSoundMatrix[chosenAudio], waitFor=0)
+				self.activeSoundMatrix[chosenAudio].play(loops=2)
+				#playAndWait(self.activeSoundMatrix[chosenAudio], waitFor=0)
 				audioTime = libtime.get_time()
 				audioStartTime_list.append(audioTime)
 				if self.experiment.subjVariables['eyetracker'] == "yes":
@@ -697,7 +701,7 @@ class ExpPresentation(Exp):
 
 			if eventTriggered == 1:
 				# check if the infant has switched
-				if curLook != response and libtime.get_time() - audioTime > self.labelTime:
+				if curLook != response or libtime.get_time() - audioTime > self.labelTime:
 					countLeft = 0
 					countRight = 0
 					gazeCon = False
@@ -716,6 +720,7 @@ class ExpPresentation(Exp):
 						# log audio event end
 						self.experiment.tracker.log(
 							"audioEnd" + str(selectionNum))
+
 		if eventTriggered == 1:
 			# stop sound
 			self.activeSoundMatrix[chosenAudio].stop()
@@ -828,6 +833,6 @@ currentPresentation = ExpPresentation(currentExp)
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
-currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-currentPresentation.cycleThroughTrials(whichPart = "sampleTest")
+#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+#currentPresentation.cycleThroughTrials(whichPart = "sampleTest")
 currentPresentation.EndDisp()
