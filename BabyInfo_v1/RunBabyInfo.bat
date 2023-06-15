@@ -1,4 +1,5 @@
-
 @echo on
 
-conda activate baby-info-py38 & python screenCheck.py & python BabyInfo_v1.py
+call activate  C:\AnacondaEnvs\baby-info-38
+
+python screenCheck.py & python BabyInfo_v1.py
