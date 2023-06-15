@@ -255,7 +255,7 @@ class ExpPresentation(Exp):
 					self.experiment.win.flip()
 				curFamilTrialIndex += 1
 
-		elif whichPart == "sampleTraining":
+		elif whichPart == "activeTraining":
 			curActiveTrainingIndex = 1
 			for curTrial in self.activeTrainingTrialsMatrix.trialList:
 				print(curTrial)
@@ -266,13 +266,13 @@ class ExpPresentation(Exp):
 					self.presentActiveTrial(curTrial, curActiveTrainingIndex, "activeTraining")
 					curActiveTrainingIndex += 1
 
-		elif whichPart == "sampleTest":
-			curActiveTrainingIndex = 1
+		elif whichPart == "activeTest":
+			curActiveTestIndex = 1
 			for curTrial in self.activeTestTrialsMatrix.trialList:
 				print(curTrial)
 
-				self.presentActiveTrial(curTrial, curActiveTrainingIndex, "activeTest")
-				curActiveTrainingIndex += 1
+				self.presentActiveTrial(curTrial, curActiveTestIndex, "activeTest")
+				curActiveTestIndex += 1
 
 	def presentAGTrial(self, curTrial, curTrialFieldNames, getInput, duration):
 
@@ -445,11 +445,11 @@ class ExpPresentation(Exp):
 		# Active Screen(s) #
 		# Picture Names (should match name in left/right image column
 		# Left speaker
-		leftSpeakerImageGrayName = self.activeTrainingTrialsMatrix.trialList[0]['leftImage'] + '_grayscale'
-		leftSpeakerImageColorName = self.activeTrainingTrialsMatrix.trialList[0]['leftImage'] + '_color'
+		leftSpeakerImageGrayName = curTrial['leftImage'] + '_grayscale'
+		leftSpeakerImageColorName =curTrial['leftImage'] + '_color'
 		# Right speaker
-		rightSpeakerImageGrayName = self.activeTrainingTrialsMatrix.trialList[0]['rightImage'] + '_grayscale'
-		rightSpeakerImageColorName = self.activeTrainingTrialsMatrix.trialList[0]['rightImage'] + '_color'
+		rightSpeakerImageGrayName = curTrial['rightImage'] + '_grayscale'
+		rightSpeakerImageColorName = curTrial['rightImage'] + '_color'
 
 		# Find Psychopy Stim from image matrix
 		# Left
@@ -469,11 +469,6 @@ class ExpPresentation(Exp):
 		self.rightSpeakerColorImage.setPos(self.pos['centerRight'])
 		self.rightSpeakerColorImage.size = (280, 400)
 
-		self.leftAudioIntroduction = self.activeTrainingTrialsMatrix.trialList[0]['leftAudio']
-		self.rightAudioIntroduction = self.activeTrainingTrialsMatrix.trialList[0]['rightAudio']
-
-		self.leftAudioNovel = self.activeTestTrialsMatrix.trialList[0]['leftAudio']
-		self.rightAudioNovel = self.activeTestTrialsMatrix.trialList[0]['rightAudio']
 
 		# Initialize Screens
 		self.activeGrayScreen = libscreen.Screen(disptype='psychopy')
@@ -697,7 +692,7 @@ class ExpPresentation(Exp):
 				self.activeSoundMatrix[chosenAudio].setLoops(-1)
 				print(self.activeSoundMatrix[chosenAudio].loops)
 				self.activeSoundMatrix[chosenAudio].play(loops=2)
-				#playAndWait(self.activeSoundMatrix[chosenAudio], waitFor=0)
+
 				audioTime = libtime.get_time()
 				audioStartTime_list.append(audioTime)
 				if self.experiment.subjVariables['eyetracker'] == "yes":
@@ -775,7 +770,7 @@ class ExpPresentation(Exp):
 			setAndPresentScreen(self.experiment.disp, endScreen)
 
 			self.AGsoundMatrix['ding'].play()
-			core.wait(.75)
+			core.wait(.25)
 			self.AGsoundMatrix['ding'].stop()
 
 		# have the stars jiggle
@@ -837,7 +832,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-currentPresentation.cycleThroughTrials(whichPart = "sampleTraining")
-#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-#currentPresentation.cycleThroughTrials(whichPart = "sampleTest")
+currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
