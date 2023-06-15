@@ -770,11 +770,12 @@ class ExpPresentation(Exp):
 			setAndPresentScreen(self.experiment.disp, endScreen)
 
 			self.AGsoundMatrix['ding'].play()
-			core.wait(.25)
+			core.wait(.5)
 			self.AGsoundMatrix['ding'].stop()
 
 		# have the stars jiggle
 		self.AGsoundMatrix['applause'].play()
+		self.AGsoundMatrix['done'].volume = 2
 		self.AGsoundMatrix['done'].play()
 
 		for i in range(4):
@@ -832,7 +833,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
-currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-currentPresentation.cycleThroughTrials(whichPart = "activeTest")
+#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+#currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
