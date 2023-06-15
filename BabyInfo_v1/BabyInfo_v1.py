@@ -251,7 +251,7 @@ class ExpPresentation(Exp):
 
 					self.experiment.win.flip()
 				if curTrial['trialType'] == 'AG':
-					self.presentAGTrial(curTrial, getInput = "no", duration = curTrial['AGTime'])
+					self.presentAGTrial(curTrial, self.trialFieldNames, getInput = "no", duration = curTrial['AGTime'])
 					self.experiment.win.flip()
 				curFamilTrialIndex += 1
 
@@ -259,17 +259,22 @@ class ExpPresentation(Exp):
 			curActiveTrainingIndex = 1
 			for curTrial in self.activeTrainingTrialsMatrix.trialList:
 				print(curTrial)
-				self.presentActiveTrial(curTrial, curActiveTrainingIndex, "training")
-				curActiveTrainingIndex += 1
+				if curTrial['trialType'] == 'AG':
+					self.presentAGTrial(curTrial, self.activeTrainingTrialFieldNames ,getInput = "no", duration = curTrial['AGTime'])
+					self.experiment.win.flip()
+				if curTrial['trialType'] == 'activeTraining':
+					self.presentActiveTrial(curTrial, curActiveTrainingIndex, "activeTraining")
+					curActiveTrainingIndex += 1
 
 		elif whichPart == "sampleTest":
 			curActiveTrainingIndex = 1
 			for curTrial in self.activeTestTrialsMatrix.trialList:
 				print(curTrial)
-				self.presentActiveTrial(curTrial, curActiveTrainingIndex, "test")
+
+				self.presentActiveTrial(curTrial, curActiveTrainingIndex, "activeTest")
 				curActiveTrainingIndex += 1
 
-	def presentAGTrial(self, curTrial, getInput, duration):
+	def presentAGTrial(self, curTrial, curTrialFieldNames, getInput, duration):
 
 		# flip screen
 		self.experiment.disp.fill(self.experiment.blackScreen)
@@ -281,8 +286,8 @@ class ExpPresentation(Exp):
 			self.experiment.tracker.start_recording()
 			logData = "Experiment %s subjCode %s" % (
 			self.experiment.expName, self.experiment.subjVariables['subjCode'])
-
-			for field in self.trialFieldNames:
+			print(curTrialFieldNames)
+			for field in curTrialFieldNames:
 				logData += " "+field+" "+str(curTrial[field])
 			#print("would have logged " + logData)
 			self.experiment.tracker.log(logData)
@@ -484,7 +489,7 @@ class ExpPresentation(Exp):
 		buildScreenPsychoPy(self.activeLeftScreen, [self.leftSpeakerColorImage, self.rightSpeakerGrayImage])
 		buildScreenPsychoPy(self.activeRightScreen, [self.leftSpeakerGrayImage, self.rightSpeakerColorImage])
 
-		if stage == "test":
+		if stage == "activeTest":
 
 			# Load correct novel images
 			leftNovelImageGrayName = curTrial['novelImage'] + '_left_grayscale'
