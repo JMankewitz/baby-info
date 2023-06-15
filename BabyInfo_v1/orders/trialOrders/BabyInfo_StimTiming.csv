@@ -1,0 +1,18 @@
+﻿speakerExp,speakerPos,leftImage,rightImage,label,video,phraseOnsetTime,targetOnsetTime,targetOffsetTime,videoLength,end silence duration,onsetTime,target word length,first frame trim/buffer,end frame hold,,corrected phrase start time,corrected video length
+exp1,right,truck,apple,find_dog,exp1_left_find_dog,900,2502,3103,4471,3000,2500,601,-2,,,898,4469
+exp1,right,ball,car,find_hat,exp1_left_find_hat,1434,3036,3470,5105,3000,2500,434,-536,,,898,4569
+exp1,right,truck,apple,look_apple,exp1_left_look_apple,834,2002,2802,3891,3000,2500,800,498,,,1332,4389
+exp1,right,duck,bear,look_train,exp1_left_look_train,1835,2902,3803,6029,3000,2500,901,-402,,,1433,5627
+exp1,right,ball,car,see_ball,exp1_left_see_ball,1468,3103,3703,5271,3000,2500,600,-603,,,865,4668
+exp1,right,shoe,book,see_cat,exp1_left_see_cat,967,2602,2936,3803,3000,2500,334,-102,,,865,3701
+exp1,right,shoe,book,wheres_book,exp1_left_wheres_book,1401,2635,2902,4104,3000,2500,267,-135,,,1266,3969
+exp1,right,duck,bear,wheres_duck,exp1_left_wheres_duck,1134,2168,2469,3737,3000,2500,301,332,,,1466,4069
+exp2,left,truck,apple,find_dog,exp2_right_find_dog,1401,3036,3670,5271,3000,2500,634,-536,,,865,4735
+exp2,left,ball,car,find_hat,exp2_right_find_hat,1735,3370,3870,6072,3000,2500,500,-870,,,865,5202
+exp2,left,truck,apple,look_apple,exp2_right_look_apple,1701,2836,3536,4671,3000,2500,700,-336,,,1365,4335
+exp2,right,duck,bear,look_train,exp2_right_look_train,1835,2969,3603,5271,3000,2500,634,-469,,,1366,4802
+exp2,left,duck,bear,look_train,exp2_right_look_train,1234,2235,3003,4671,3000,2500,768,265,,,1499,4936
+exp2,left,ball,car,see_ball,exp2_right_see_ball,1701,3136,3636,5038,3000,2500,500,-636,,,1065,4402
+exp2,left,shoe,book,see_cat,exp2_right_see_cat,1835,3370,4037,5672,3000,2500,667,-870,,,965,4802
+exp2,left,shoe,book,wheres_book,exp2_right_wheres_book,1634,2969,3536,5472,3000,2500,567,-469,,,1165,5003
+exp2,left,duck,bear,wheres_duck,exp2_right_wheres_duck,1401,2736,3169,5238,3000,2500,433,-236,,,1165,5002
