@@ -556,11 +556,13 @@ class ExpPresentation(Exp):
 		selectionNum = 0
 		countLeft = 0
 		countRight = 0
+		countDiff = 0
+		countAway = 0
 		gazeCon = False
 		contingent = False
 		eventTriggered = 0
 		firstTrigger = 0
-		last150ms = []
+		lastms = []
 
 		# list of events
 		rt_list = []
@@ -583,19 +585,22 @@ class ExpPresentation(Exp):
 				sampledGazePos = self.experiment.tracker.sample()
 
 				# add cur gaze position to the list
-				last150ms.append(sampledGazePos)
+				lastms.append(sampledGazePos)
 
 				# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
-				if len(last150ms) > 9:
-					del (last150ms[0])
+				# Edit: Changing this to 250ms instead to give more smoothing breathing room
+
+				if len(lastms) > 9:
+					del (lastms[0])
 
 				# Now, remove the (no looking data) tuples
-				last150msClean = [e for e in last150ms if e != self.lookAwayPos]
+				lastmsClean = [e for e in lastms if e != self.lookAwayPos]
+
 				# Now calculate the mean
-				if len(last150msClean) > 0:
+				if len(lastmsClean) > 0:
 					# calculate mean
 					gazepos = tuple(
-						map(lambda y: sum(y) / float(len(y)), zip(*last150msClean)))
+						map(lambda y: sum(y) / float(len(y)), zip(*lastmsClean)))
 				else:
 					gazepos = self.lookAwayPos
 
@@ -628,7 +633,7 @@ class ExpPresentation(Exp):
 				curLook = "away"
 			else:
 				curLook = "none"
-			#print(curLook)
+
 
 			# If an event has already been triggered, it can not be the first trigger
 			if eventTriggered == 1:
@@ -700,10 +705,30 @@ class ExpPresentation(Exp):
 					self.experiment.tracker.log("audio" + str(selectionNum))
 
 			if eventTriggered == 1:
+
+				# I want it to end the audio only if the cur look is...
+				# 1. image to away for a significant time
+				# 2. image to none for a short time (away but on screen)
+				# 2. the max sample has been reached
+				if curLook == "away" and (response == "left" or response == "right"):
+					countAway +=1
+					countDiff = 0
+				elif curLook == response:
+					countAway = 0
+					countDiff = 0
+				elif curLook =="none" and (response == "left" or response == "right"):
+					countDiff += 1
+					countAway = 0
+				print(countDiff)
+				print(countAway)
+				print(curLook)
+				print(response)
 				# check if the infant has switched
-				if curLook != response or libtime.get_time() - audioTime > self.labelTime:
+				if (curLook != response and (countAway > 10000 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
 					countLeft = 0
 					countRight = 0
+					countDiff = 0
+					countAway = 0
 					gazeCon = False
 					contingent = False
 					eventTriggered = 0
@@ -833,7 +858,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 #currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
 #currentPresentation.cycleThroughTrials(whichPart = "activeTest")
-currentPresentation.EndDisp()
+#currentPresentation.EndDisp()
