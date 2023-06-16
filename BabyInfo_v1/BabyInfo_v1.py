@@ -122,12 +122,12 @@ class Exp:
 		self.win = pygaze.expdisplay
 		# Stim Paths
 		self.imagePath = self.path + '/stimuli/images/'
-		#self.soundPath = self.path + '/stimuli/movies/Order' + self.subjVariables['order'] +'/'
-		self.soundPath = self.path + '/stimuli/movies/OrderAll/'
+		self.soundPath = self.path + '/stimuli/movies/Order' + self.subjVariables['order'] +'/'
+		#self.soundPath = self.path + '/stimuli/movies/OrderAll/'
 
 		self.activeSoundPath = self.path + '/stimuli/sounds/sampleAudio/'
-		#self.moviePath = self.path + '/stimuli/movies/Order' + self.subjVariables['order'] +'/'
-		self.moviePath = self.path + '/stimuli/movies/OrderAll/'
+		self.moviePath = self.path + '/stimuli/movies/Order' + self.subjVariables['order'] +'/'
+		#self.moviePath = self.path + '/stimuli/movies/OrderAll/'
 		self.AGPath = self.path + '/stimuli/movies/AGStims/'
 		self.imageExt = ['jpg', 'png', 'gif', 'jpeg']
 
@@ -395,7 +395,7 @@ class ExpPresentation(Exp):
 
 		trialTimerStart = libtime.get_time()
 		libtime.pause(self.startSilence)
-		curSound.volume = 3
+		curSound.volume = 2
 		curSound.play()
 		mov.play()
 
@@ -588,9 +588,9 @@ class ExpPresentation(Exp):
 				lastms.append(sampledGazePos)
 
 				# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
-				# Edit: Changing this to 250ms instead to give more smoothing breathing room
+				# Edit: Changing this to 300 instead to give more smoothing breathing room
 
-				if len(lastms) > 9:
+				if len(lastms) > 18:
 					del (lastms[0])
 
 				# Now, remove the (no looking data) tuples
@@ -633,7 +633,7 @@ class ExpPresentation(Exp):
 				curLook = "away"
 			else:
 				curLook = "none"
-
+			print(curLook)
 
 			# If an event has already been triggered, it can not be the first trigger
 			if eventTriggered == 1:
@@ -716,15 +716,12 @@ class ExpPresentation(Exp):
 				elif curLook == response:
 					countAway = 0
 					countDiff = 0
-				elif curLook =="none" and (response == "left" or response == "right"):
+				elif curLook == "none" and (response == "left" or response == "right"):
 					countDiff += 1
 					countAway = 0
-				print(countDiff)
-				print(countAway)
-				print(curLook)
-				print(response)
+
 				# check if the infant has switched
-				if (curLook != response and (countAway > 10000 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
+				if (curLook != response and (countAway > 100000 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
 					countLeft = 0
 					countRight = 0
 					countDiff = 0
@@ -763,7 +760,6 @@ class ExpPresentation(Exp):
 			# stop eye tracking
 			self.experiment.tracker.log("stopScreen")
 			self.experiment.tracker.stop_recording()
-
 
 	def EndDisp(self):
 		# show the screen with no stars filled in
@@ -859,6 +855,6 @@ currentPresentation = ExpPresentation(currentExp)
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
-#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-#currentPresentation.cycleThroughTrials(whichPart = "activeTest")
-#currentPresentation.EndDisp()
+currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+currentPresentation.cycleThroughTrials(whichPart = "activeTest")
+currentPresentation.EndDisp()
