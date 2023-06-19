@@ -6,7 +6,9 @@
 #The .tsv file output in pygaze contains gaze data info as well event data logged during the experiment.
 #These functions help in integrating the logged event and the gaze data after the experiment.
 #functions overview:
-#integrateEventData: integrates logged event data, puts all of the data together
+#integrateEventData: integrates logged event data, puts all of the data together (for old tobii code)
+#integrateEventDataUpdated: integrates logged event data, puts all of the data together (for new tobii code)
+
 #processGazeData: replace missing values with NA, compute means of left and right eye coordinates
 #createTimeBins: adds unified time bins in addition to "noisy" timestamp column
 #mergeTrialList: merge each trial with its trial info from a trial list
@@ -116,7 +118,56 @@ integrateEventData=function(gazedatafileName,skipNum=11) {
   return(d)
 }
 
-
+integrateEventDataUpdated=function(gazedatafileName,skipNum=7){
+  d_raw=read.csv(gazedatafileName,sep="\t", skip=skipNum)
+  
+  #Convert other eyetracking columns to numeric values
+  d_raw$TimeStamp=suppressWarnings(as.numeric(as.character(d_raw$TimeStamp)))
+  
+  d_raw$GazePointXLeft=suppressWarnings(as.numeric(as.character(d_raw$GazePointXLeft)))
+  d_raw$GazePointYLeft=suppressWarnings(as.numeric(as.character(d_raw$GazePointYLeft)))
+  d_raw$ValidityLeft=suppressWarnings(as.numeric(as.character(d_raw$ValidityLeft)))
+  d_raw$GazePointXRight=suppressWarnings(as.numeric(as.character(d_raw$GazePointXRight)))
+  d_raw$GazePointYRight=suppressWarnings(as.numeric(as.character(d_raw$GazePointYRight)))
+  d_raw$ValidityRight=suppressWarnings(as.numeric(as.character(d_raw$ValidityRight)))
+  d_raw$GazePointX=suppressWarnings(as.numeric(as.character(d_raw$GazePointX)))
+  d_raw$GazePointY=suppressWarnings(as.numeric(as.character(d_raw$GazePointY)))
+  d_raw$Event=as.character(d_raw$Event)
+  
+  #select rows with trial information
+  d_trial_info <- d_raw |> 
+    filter(grepl("Experiment", d_raw$Event)) |> 
+    select(TimeStamp, Event) |> 
+    # separate the event data into a list column
+    mutate(values = strsplit(Event, " ")) |> 
+    # unnest to create a row for each event entry
+    unnest(values)
+  
+  # create a corresponding event name column
+  event_names = d_trial_info$values
+  event_names[c(FALSE, TRUE)] <- NA #replace the non-event name entries
+  
+  d_trial_info$names = append(NA, event_names[-length(event_names)])
+  
+  #pivot wider to create a column for each event name-value pair
+  
+  d_trial_data_wider <- d_trial_info |> 
+    filter(!is.na(names)) |>  #drop the filler NA rows
+    #TODO: This is a fix because my trialOrders files are inconsistent rip
+    mutate(names = ifelse(names == "TrialType", "trialType", names)) |> 
+    pivot_wider(names_from = names, values_from = values)
+  
+  # create an ID for each trial
+  d_trial_data_wider$trial_unique_id <- seq(1, nrow(d_trial_data_wider))
+  
+  d_full <- d_raw |> 
+    #create the corresponding unique trial ID with cumsum
+    mutate(trial_unique_id = cumsum(grepl("Experiment", d_raw$Event))) |> 
+    
+    left_join(d_trial_data_wider |> select(-Event, -TimeStamp))
+  
+  return(d_full)
+}
 
 processGazeData=function(gazedata,output_file=NULL) {
   

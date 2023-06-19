@@ -363,8 +363,8 @@ class ExpPresentation(Exp):
 		# start eyetracking
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			self.experiment.tracker.start_recording()
-			logData = "Experiment %s subjCode %s Phase %s TrialNumber %d" % (
-			self.experiment.expName, self.experiment.subjVariables['subjCode'], stage,
+			logData = "Experiment %s subjCode %s TrialNumber %d" % (
+			self.experiment.expName, self.experiment.subjVariables['subjCode'],
 			curTrialIndex)
 
 			for field in self.trialFieldNames:
@@ -528,11 +528,13 @@ class ExpPresentation(Exp):
 
 		if self.experiment.subjVariables['eyetracker'] == 'yes':
 			self.experiment.tracker.start_recording()
-			self.experiment.tracker.log(
-				"Experiment %s subjCode %s TrialNumber %d TrialType %s" % (
-					self.experiment.expName,
-					self.experiment.subjVariables['subjCode'],
-					curActiveTrialIndex, stage))
+			logData = "Experiment %s subjCode %s TrialNumber %d" % (
+				self.experiment.expName,
+				self.experiment.subjVariables['subjCode'],
+				curActiveTrialIndex)
+			for field in self.trialFieldNames:
+				logData += " " + field + " " + str(curTrial[field])
+			self.experiment.tracker.log(logData)
 
 		trialTimerStart = libtime.get_time()
 

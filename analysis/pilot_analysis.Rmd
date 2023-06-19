@@ -25,11 +25,18 @@ trials_path <- here('BabyInfo_v1/data/')
 
 ## Preprocess Data Files
 
+The goal for this section is to have a set of functions/scripts that...
+- Extract trial log information (Trial number, trial type, speaker type, etc) into columns
+- normalize XY timepoints
+- create AOI bins
+- reasonably interpolate missing data
+
+By the nature of my training, this will probably look a lot like peekbank scripts, because thats what I know
+If you have other suggestions/suggested changes, do let me know! -JM
+
 ```{r}
 adult_testing_folder <- 'adult_testing/'
 adult_testing_data_path <- paste0(eyetracking_data_path, adult_testing_folder)
-
-
 
 gazeDataNames = list.files(adult_testing_data_path, pattern=".tsv", full.names = T)
 
@@ -37,45 +44,44 @@ first_file = gazeDataNames[1]
 
 gazeDataComplete = c()
 
-d_raw = read_tsv(first_file, skip = 7)
-
-
-
-
-#rowNumTrialStart = as.numeric(rownames(d[grepl("time_stamp",d_raw$time_stamp),]))
-d_raw$TimeStamp=suppressWarnings(as.numeric(as.character(d_raw$TimeStamp)))
-
-d_raw$GazePointXLeft=suppressWarnings(as.numeric(as.character(d_raw$GazePointXLeft)))
-d_raw$GazePointYLeft=suppressWarnings(as.numeric(as.character(d_raw$GazePointYLeft)))
-d_raw$ValidityLeft=suppressWarnings(as.numeric(as.character(d_raw$ValidityLeft)))
-d_raw$GazePointXRight=suppressWarnings(as.numeric(as.character(d_raw$GazePointXRight)))
-d_raw$GazePointYRight=suppressWarnings(as.numeric(as.character(d_raw$GazePointYRight)))
-d_raw$ValidityRight=suppressWarnings(as.numeric(as.character(d_raw$ValidityRight)))
-d_raw$GazePointX=suppressWarnings(as.numeric(as.character(d_raw$GazePointX)))
-d_raw$GazePointY=suppressWarnings(as.numeric(as.character(d_raw$GazePointY)))
-
-d_raw$Event=as.character(d_raw$Event)
-
-
-d <- d_raw |> janitor::clean_names()
-
-# TODO: uniform the logging details for each trial start instead of having different information in the familiarization vs sampling trials
-
-# TODO: For now, split into different dataframes 
-
-# Wrangle event logging to get experiment phases and trial numbers
-
-d_event_logging <- d |> filter(!is.na(event))
-
-# split off real logging events and event data columns
-
-d_event_logging$trial_info <- grepl("TrialNumber",d_event_logging$event)
-
-d_event_logging <- d_event_logging |> 
-  mutate(trial_data = ifelse(grepl("TrialNumber", event), event, NA))
-
-
+integrateEventDataUpdated(first_file, skipNum = 7)
 ```
 
 
 # Pilot 1
+
+```{r}
+polot_1_path <- 'pilot_1/'
+pilot_1_data_path <- paste0(eyetracking_data_path, polot_1_path)
+
+gazeDataNames = list.files(pilot_1_data_path, pattern=".tsv", full.names = T)
+
+first_file = gazeDataNames[1]
+
+gazeDataComplete = do.call(rbind, lapply(gazeDataNames, integrateEventDataUpdated))
+
+gazeDataComplete_processed = processGazeData(gazeDataComplete)
+
+gazeDataBinned = createTimeBins(gazeDataComplete_processed)
+
+gazediffs <- gazeDataBinned |> select(TimeStamp, TimeBin, TimeBinMs) |> 
+       mutate(diff = TimeStamp-TimeBinMs,
+              expected_bin = seq(18, nrow(gazeDataBinned)+17),
+              expected_ms = expected_bin*16.6666666666,
+              diff2 = TimeStamp -expected_ms,
+              bindiff = TimeBin - expected_bin)
+
+# need to do some kind of cumsum situation to fill?
+
+# first zero to the start of the trial
+# then shift so its zeroed to the start of the screen
+
+
+filled_data = gazeDataBinned |> 
+  mutate(zeroed_time_ms = case_when(grepl("Experiment", gazeDataBinned$Event) ~ TimeStamp, 
+                                   TRUE ~ NA)) |> 
+  fill(zeroed_time_ms) |> 
+  mutate(TimeStamp_zeroed = TimeStamp - zeroed_time_ms) |> 
+  select(TimeStamp, TimeStamp_zeroed, everything())
+
+```

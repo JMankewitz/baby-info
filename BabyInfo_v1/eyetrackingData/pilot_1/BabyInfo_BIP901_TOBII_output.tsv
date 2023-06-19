@@ -401,7 +401,7 @@ TimeStamp	Event	GazePointXLeft	GazePointYLeft	ValidityLeft	GazePointXRight	GazeP
 8087.871		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
 8105.702		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
 8122.339		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
-8137.136	Experiment BabyInfo subjCode BabyInfo_BIP901 TrialNumber 1 TrialType activeTraining
+8137.136	Experiment BabyInfo subjCode BabyInfo_BIP901 TrialNumber 1 trialType activeTraining
 8141.713	startScreen
 8149.845		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
 8171.716		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
@@ -6012,7 +6012,7 @@ TimeStamp	Event	GazePointXLeft	GazePointYLeft	ValidityLeft	GazePointXRight	GazeP
 116185.784		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
 116218.586		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
 116218.866		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
-116241.215	Experiment BabyInfo subjCode BabyInfo_BIP901 TrialNumber 1 TrialType activeTest
+116241.215	Experiment BabyInfo subjCode BabyInfo_BIP901 TrialNumber 1 trialType activeTest
 116249.696	startScreen
 116251.976		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
 116252.126		-1	-1	0	-1	-1	0	-1.0	-1.0	-1	0	-1	0
@@ -7349,7 +7349,7 @@ TimeStamp	Event	GazePointXLeft	GazePointYLeft	ValidityLeft	GazePointXRight	GazeP
 139250.904		665.0	740.0	1	663.0	753.0	1	664	746	4.2729	1	4.4776	1
 139267.979		671.0	747.0	1	672.0	757.0	1	672	752	4.326	1	4.4995	1
 139283.694		668.0	734.0	1	677.0	750.0	1	672	742	4.3325	1	4.4596	1
-139290.135	Experiment BabyInfo subjCode BabyInfo_BIP901 TrialNumber 2 TrialType activeTest
+139290.135	Experiment BabyInfo subjCode BabyInfo_BIP901 TrialNumber 2 trialType activeTest
 139295.101	startScreen
 139300.69		669.0	736.0	1	662.0	753.0	1	666	744	4.3467	1	4.4429	1
 139317.215		667.0	742.0	1	663.0	754.0	1	665	748	4.356	1	4.4659	1
