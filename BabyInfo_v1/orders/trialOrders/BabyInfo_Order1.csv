@@ -1,5 +1,5 @@
 ﻿trialType,trialID,blockID,speakerType,speakerExp,speakerPos,leftImage,rightImage,label,video,trialDuration,trialStartSilence,trialEndSilence,AG,AGType,AGImage,AGAudio,AGVideo,AGTime,AGgetInput,AGWidth,AGHeight
-AG,1,,,,,,,,,,,,1,movie,,spinningballs_5,spinningballs_5,5000,,,
+AG,1,,,,,,,,,,,,1,movie,,galaxies_5,galaxies_5,5000,,,
 training,2,1,reliable,exp1,left,ball,car,see_ball,exp1_left_see_ball,5000,,,,,,,,,,,
 training,3,1,unreliable,exp2,right,truck,apple,find_dog,exp2_right_find_dog,5000,,,,,,,,,,,
 training,4,1,reliable,exp1,left,shoe,book,wheres_book,exp1_left_wheres_book,5000,,,,,,,,,,,
