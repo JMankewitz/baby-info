@@ -263,7 +263,7 @@ class ExpPresentation(Exp):
 					self.presentAGTrial(curTrial, self.activeTrainingTrialFieldNames ,getInput = "no", duration = curTrial['AGTime'])
 					self.experiment.win.flip()
 				if curTrial['trialType'] == 'activeTraining':
-					self.presentActiveTrial(curTrial, curActiveTrainingIndex, "activeTraining")
+					self.presentActiveTrial(curTrial, curActiveTrainingIndex, self.activeTrainingTrialFieldNames, "activeTraining")
 					curActiveTrainingIndex += 1
 
 		elif whichPart == "activeTest":
@@ -271,7 +271,7 @@ class ExpPresentation(Exp):
 			for curTrial in self.activeTestTrialsMatrix.trialList:
 				print(curTrial)
 
-				self.presentActiveTrial(curTrial, curActiveTestIndex, "activeTest")
+				self.presentActiveTrial(curTrial, curActiveTestIndex, self.activeTrialFieldNames, "activeTest")
 				curActiveTestIndex += 1
 
 	def presentAGTrial(self, curTrial, curTrialFieldNames, getInput, duration):
@@ -440,7 +440,7 @@ class ExpPresentation(Exp):
 
 		writeToFile(self.experiment.trainingOutputFile, curLine)
 
-	def presentActiveTrial(self, curTrial, curActiveTrialIndex, stage):
+	def presentActiveTrial(self, curTrial, curActiveTrialIndex, trialFieldNames, stage):
 		# Set up screens
 		# Active Screen(s) #
 		# Picture Names (should match name in left/right image column
@@ -532,7 +532,7 @@ class ExpPresentation(Exp):
 				self.experiment.expName,
 				self.experiment.subjVariables['subjCode'],
 				curActiveTrialIndex)
-			for field in self.trialFieldNames:
+			for field in trialFieldNames:
 				logData += " " + field + " " + str(curTrial[field])
 			self.experiment.tracker.log(logData)
 
@@ -723,7 +723,7 @@ class ExpPresentation(Exp):
 					countAway = 0
 
 				# check if the infant has switched
-				if (curLook != response and (countAway > 100000 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
+				if (curLook != response and (countAway > 50000 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
 					countLeft = 0
 					countRight = 0
 					countDiff = 0
@@ -857,6 +857,6 @@ currentPresentation = ExpPresentation(currentExp)
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
-currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
