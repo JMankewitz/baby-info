@@ -274,7 +274,7 @@ class ExpPresentation(Exp):
 				self.presentActiveTrial(curTrial, curActiveTestIndex, self.activeTrialFieldNames, "activeTest")
 				curActiveTestIndex += 1
 
-	def presentAGTrial(self, curTrial, curTrialFieldNames, getInput, duration):
+	def presentAGTrial(self, curTrial, trialFieldNames, getInput, duration):
 
 		# flip screen
 		self.experiment.disp.fill(self.experiment.blackScreen)
@@ -284,10 +284,10 @@ class ExpPresentation(Exp):
 		libtime.pause(self.ISI)
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			self.experiment.tracker.start_recording()
-			logData = "Experiment %s subjCode %s" % (
-			self.experiment.expName, self.experiment.subjVariables['subjCode'])
-			print(curTrialFieldNames)
-			for field in curTrialFieldNames:
+			logData = "Experiment %s subjCode %s trialOrder %s" % (
+			self.experiment.expName, self.experiment.subjVariables['subjCode'], self.experiment.subjVariables['order'])
+			print(trialFieldNames)
+			for field in trialFieldNames:
 				logData += " "+field+" "+str(curTrial[field])
 			#print("would have logged " + logData)
 			self.experiment.tracker.log(logData)
@@ -363,9 +363,9 @@ class ExpPresentation(Exp):
 		# start eyetracking
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			self.experiment.tracker.start_recording()
-			logData = "Experiment %s subjCode %s TrialNumber %d" % (
-			self.experiment.expName, self.experiment.subjVariables['subjCode'],
-			curTrialIndex)
+			logData = "Experiment %s subjCode %s trialOrder %s" % (
+				self.experiment.expName, self.experiment.subjVariables['subjCode'],
+				self.experiment.subjVariables['order'])
 
 			for field in self.trialFieldNames:
 				logData += " "+field+" "+str(curTrial[field])
@@ -528,10 +528,9 @@ class ExpPresentation(Exp):
 
 		if self.experiment.subjVariables['eyetracker'] == 'yes':
 			self.experiment.tracker.start_recording()
-			logData = "Experiment %s subjCode %s TrialNumber %d" % (
-				self.experiment.expName,
-				self.experiment.subjVariables['subjCode'],
-				curActiveTrialIndex)
+			logData = "Experiment %s subjCode %s trialOrder %s" % (
+				self.experiment.expName, self.experiment.subjVariables['subjCode'],
+				self.experiment.subjVariables['order'])
 			for field in trialFieldNames:
 				logData += " " + field + " " + str(curTrial[field])
 			self.experiment.tracker.log(logData)
