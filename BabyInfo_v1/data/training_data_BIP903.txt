@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	2	1.0	reliable	exp1	left	ball	car	see_ball	exp1_left_see_ball	5000.0	None	None	None	None	None	None	None	None	None	None	None	2	867241.5571000893	873194.6284000296	5953.071299940348
 BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	3	1.0	unreliable	exp2	right	truck	apple	find_dog	exp2_right_find_dog	5000.0	None	None	None	None	None	None	None	None	None	None	None	3	875221.0359000601	881109.7136000171	5888.677699957043
 BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	4	1.0	reliable	exp1	left	shoe	book	wheres_book	exp1_left_wheres_book	5000.0	None	None	None	None	None	None	None	None	None	None	None	4	883132.0253000595	889089.919900056	5957.894599996507
@@ -6,3 +7,13 @@ BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	7	2.0	unreliable	exp2	right	ba
 BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	8	2.0	reliable	exp1	left	truck	apple	look_apple	exp1_left_look_apple	5000.0	None	None	None	None	None	None	None	None	None	None	None	8	913975.4254000727	919928.6885999609	5953.26319988817
 BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	9	2.0	unreliable	exp2	right	shoe	book	see_cat	exp2_right_see_cat	5000.0	None	None	None	None	None	None	None	None	None	None	None	9	921950.0633000862	927909.3732000329	5959.309899946675
 BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	10	2.0	reliable	exp1	left	duck	bear	look_duck	exp1_left_look_duck	5000.0	None	None	None	None	None	None	None	None	None	None	None	10	929935.0902999286	935890.2044999413	5955.114200012758
+=======
+BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	2	1.0	reliable	exp1	left	ball	car	see_ball	exp1_left_see_ball	5000.0	None	None	None	None	None	None	None	None	None	None	None	2	867241.5571000893	873194.6284000296	5953.071299940348
+BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	3	1.0	unreliable	exp2	right	truck	apple	find_dog	exp2_right_find_dog	5000.0	None	None	None	None	None	None	None	None	None	None	None	3	875221.0359000601	881109.7136000171	5888.677699957043
+BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	4	1.0	reliable	exp1	left	shoe	book	wheres_book	exp1_left_wheres_book	5000.0	None	None	None	None	None	None	None	None	None	None	None	4	883132.0253000595	889089.919900056	5957.894599996507
+BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	5	1.0	unreliable	exp2	right	duck	bear	look_train	exp2_right_look_train	5000.0	None	None	None	None	None	None	None	None	None	None	None	5	891112.3967999592	897036.1965999473	5923.799799988046
+BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	7	2.0	unreliable	exp2	right	ball	car	find_hat	exp2_right_find_hat	5000.0	None	None	None	None	None	None	None	None	None	None	None	7	906026.8011998851	911949.3622998707	5922.561099985614
+BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	8	2.0	reliable	exp1	left	truck	apple	look_apple	exp1_left_look_apple	5000.0	None	None	None	None	None	None	None	None	None	None	None	8	913975.4254000727	919928.6885999609	5953.26319988817
+BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	9	2.0	unreliable	exp2	right	shoe	book	see_cat	exp2_right_see_cat	5000.0	None	None	None	None	None	None	None	None	None	None	None	9	921950.0633000862	927909.3732000329	5959.309899946675
+BIP903	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	10	2.0	reliable	exp1	left	duck	bear	look_duck	exp1_left_look_duck	5000.0	None	None	None	None	None	None	None	None	None	None	None	10	929935.0902999286	935890.2044999413	5955.114200012758
+>>>>>>> Stashed changes

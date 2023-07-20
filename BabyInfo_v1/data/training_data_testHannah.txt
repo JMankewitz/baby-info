@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	2	1.0	reliable	exp1	left	ball	car	see_ball	exp1_left_see_ball	5000.0	None	None	None	None	None	None	None	None	None	None	None	2	85615.13349999997	91570.78120000006	5955.647700000089
 testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	3	1.0	unreliable	exp2	right	truck	apple	find_dog	exp2_right_find_dog	5000.0	None	None	None	None	None	None	None	None	None	None	None	3	92617.38879999996	98568.10570000006	5950.716900000101
 testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	4	1.0	reliable	exp1	left	shoe	book	wheres_book	exp1_left_wheres_book	5000.0	None	None	None	None	None	None	None	None	None	None	None	4	99595.24250000005	105548.46529999998	5953.22279999993
@@ -6,3 +7,13 @@ testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	7	2.0	unreliable	exp2	righ
 testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	8	2.0	reliable	exp1	left	truck	apple	look_apple	exp1_left_look_apple	5000.0	None	None	None	None	None	None	None	None	None	None	None	8	126447.43830000005	132372.23140000005	5924.793099999995
 testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	9	2.0	unreliable	exp2	right	shoe	book	see_cat	exp2_right_see_cat	5000.0	None	None	None	None	None	None	None	None	None	None	None	9	133400.035	139353.37530000004	5953.34030000004
 testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	10	2.0	reliable	exp1	left	duck	bear	look_duck	exp1_left_look_duck	5000.0	None	None	None	None	None	None	None	None	None	None	None	10	140374.81130000003	146334.6815	5959.870199999976
+=======
+testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	2	1.0	reliable	exp1	left	ball	car	see_ball	exp1_left_see_ball	5000.0	None	None	None	None	None	None	None	None	None	None	None	2	85615.13349999997	91570.78120000006	5955.647700000089
+testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	3	1.0	unreliable	exp2	right	truck	apple	find_dog	exp2_right_find_dog	5000.0	None	None	None	None	None	None	None	None	None	None	None	3	92617.38879999996	98568.10570000006	5950.716900000101
+testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	4	1.0	reliable	exp1	left	shoe	book	wheres_book	exp1_left_wheres_book	5000.0	None	None	None	None	None	None	None	None	None	None	None	4	99595.24250000005	105548.46529999998	5953.22279999993
+testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	5	1.0	unreliable	exp2	right	duck	bear	look_train	exp2_right_look_train	5000.0	None	None	None	None	None	None	None	None	None	None	None	5	106576.07989999997	112496.49169999998	5920.411800000016
+testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	7	2.0	unreliable	exp2	right	ball	car	find_hat	exp2_right_find_hat	5000.0	None	None	None	None	None	None	None	None	None	None	None	7	119503.62619999998	125425.69300000003	5922.066800000044
+testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	8	2.0	reliable	exp1	left	truck	apple	look_apple	exp1_left_look_apple	5000.0	None	None	None	None	None	None	None	None	None	None	None	8	126447.43830000005	132372.23140000005	5924.793099999995
+testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	9	2.0	unreliable	exp2	right	shoe	book	see_cat	exp2_right_see_cat	5000.0	None	None	None	None	None	None	None	None	None	None	None	9	133400.035	139353.37530000004	5953.34030000004
+testHannah	keyboard	f	24.8	1	EB	1	0	yes	gaze	training	10	2.0	reliable	exp1	left	duck	bear	look_duck	exp1_left_look_duck	5000.0	None	None	None	None	None	None	None	None	None	None	None	10	140374.81130000003	146334.6815	5959.870199999976
+>>>>>>> Stashed changes

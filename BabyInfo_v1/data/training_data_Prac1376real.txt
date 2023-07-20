@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	2	1.0	reliable	exp1	left	ball	car	see_ball	exp1_left_see_ball	5000.0	None	None	None	None	None	None	None	None	None	None	None	2	737557.716299998	743511.3566000073	5953.640300009283
 Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	3	1.0	unreliable	exp2	right	truck	apple	find_dog	exp2_right_find_dog	5000.0	None	None	None	None	None	None	None	None	None	None	None	3	745535.8383999992	751491.4216000034	5955.583200004185
 Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	4	1.0	reliable	exp1	left	shoe	book	wheres_book	exp1_left_wheres_book	5000.0	None	None	None	None	None	None	None	None	None	None	None	4	753520.4455000057	759471.1397000065	5950.694200000726
@@ -6,3 +7,13 @@ Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	7	2.0	unreliable	exp2	ri
 Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	8	2.0	reliable	exp1	left	truck	apple	look_apple	exp1_left_look_apple	5000.0	None	None	None	None	None	None	None	None	None	None	None	8	784372.1056000068	790327.8677000053	5955.762099998537
 Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	9	2.0	unreliable	exp2	right	shoe	book	see_cat	exp2_right_see_cat	5000.0	None	None	None	None	None	None	None	None	None	None	None	9	792358.8030999963	798310.7745000016	5951.971400005277
 Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	10	2.0	reliable	exp1	left	duck	bear	look_duck	exp1_left_look_duck	5000.0	None	None	None	None	None	None	None	None	None	None	None	10	800336.5883000079	806289.5959000016	5953.007599993725
+=======
+Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	2	1.0	reliable	exp1	left	ball	car	see_ball	exp1_left_see_ball	5000.0	None	None	None	None	None	None	None	None	None	None	None	2	737557.716299998	743511.3566000073	5953.640300009283
+Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	3	1.0	unreliable	exp2	right	truck	apple	find_dog	exp2_right_find_dog	5000.0	None	None	None	None	None	None	None	None	None	None	None	3	745535.8383999992	751491.4216000034	5955.583200004185
+Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	4	1.0	reliable	exp1	left	shoe	book	wheres_book	exp1_left_wheres_book	5000.0	None	None	None	None	None	None	None	None	None	None	None	4	753520.4455000057	759471.1397000065	5950.694200000726
+Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	5	1.0	unreliable	exp2	right	duck	bear	look_train	exp2_right_look_train	5000.0	None	None	None	None	None	None	None	None	None	None	None	5	761500.2040999971	767418.8299999951	5918.6258999980055
+Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	7	2.0	unreliable	exp2	right	ball	car	find_hat	exp2_right_find_hat	5000.0	None	None	None	None	None	None	None	None	None	None	None	7	776428.7975000043	782349.4534000056	5920.655900001293
+Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	8	2.0	reliable	exp1	left	truck	apple	look_apple	exp1_left_look_apple	5000.0	None	None	None	None	None	None	None	None	None	None	None	8	784372.1056000068	790327.8677000053	5955.762099998537
+Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	9	2.0	unreliable	exp2	right	shoe	book	see_cat	exp2_right_see_cat	5000.0	None	None	None	None	None	None	None	None	None	None	None	9	792358.8030999963	798310.7745000016	5951.971400005277
+Prac1376real	keyboard	m	22.5	1	EB	1	0	yes	gaze	training	10	2.0	reliable	exp1	left	duck	bear	look_duck	exp1_left_look_duck	5000.0	None	None	None	None	None	None	None	None	None	None	None	10	800336.5883000079	806289.5959000016	5953.007599993725
+>>>>>>> Stashed changes
