@@ -28,6 +28,7 @@ library(here)
 library(tidyverse)
 
 source("01_preprocessGazeData.R")
+source("Pygaze_InterpolateAOIHits.R")
 
 eyetracking_data_path <- here("BabyInfo_v1/eyetrackingData")
 trials_path <- here('BabyInfo_v1/data')
@@ -52,6 +53,7 @@ fullGazeDataNames <- list.files(path = eyetracking_data_path, pattern = ".tsv",
 
 # exclude data from the delete folder
 gazeDataNames <- fullGazeDataNames[!grepl("delete", fullGazeDataNames)]
+gazeDataNames <- gazeDataNames[!grepl("adult_testing", gazeDataNames)]
 
 # Alternatively, only include from specific folder
 #gazeDataNames <- fullGazeDataNames[grepl("pilot_1", fullGazeDataNames)]
@@ -77,9 +79,7 @@ Once these column values are loaded, we make the following modifications:
 
 ```{r, clean-xy}
 d_full_xy <- d_full_raw |> 
-  processGazeData(monitor_x = 1024, monitor_y = 768) |> 
-  # regularize the TimeStamps so they fall within expected sampling rate
-  createTimeBins()
+  processGazeData(monitor_x = 1024, monitor_y = 768)
 ```
 
 ### Assign Numeric Subject IDs
@@ -178,7 +178,7 @@ d_active_test_trials <- d_active_test_trials |>
 d_active_test_gaze <- 
   d_active_test_gaze |> 
   left_join(d_active_test_trials) |> 
-  select(-c(trialID:trialOrder))
+  select(-c(trialID:trialOrder, leftSpeakerType, rightSpeakerType))
 ```
 
 ##### Passive Training
@@ -254,7 +254,7 @@ right_face_aoi = list(right_face_coords[[1]] + face_area_width,
 
 Quick plot to check AOI reasonablility:
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 d_training_gaze |> 
   ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
   geom_point(alpha = .025) + 
@@ -287,7 +287,8 @@ d_training_aoi <- d_training_gaze |>
   assignAOI(right_face_aoi, "right_face") |> 
   mutate(LookAOI = case_when(LookAOI == "to_fill" & isLook==1 ~ "other",
                          LookAOI != "to_fill" ~ LookAOI, 
-                         TRUE ~ "off"))
+                         TRUE ~ "off"))|> 
+  select(-c(GazePointXLeft:GazePointXMean))
 ```
 
 ```{r}
@@ -321,7 +322,7 @@ right_active_novel_aoi = list(right_active_novel_coords[[1]] + active_novel_widt
 
 Quick plot to check AOIs
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 d_active_test_gaze |> 
   ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
   geom_point(alpha = .025) + 
@@ -352,7 +353,8 @@ d_active_test_aoi <- d_active_test_gaze |>
   assignAOI(right_active_face_aoi, "right_speaker") |> 
   mutate(LookAOI = case_when(LookAOI == "to_fill" & isLook==1 ~ "other",
                          LookAOI != "to_fill" ~ LookAOI, 
-                         TRUE ~ "off"))
+                         TRUE ~ "off"))|> 
+  select(-c(GazePointXLeft:GazePointXMean))
 ```
 
 ```{r}
@@ -361,7 +363,7 @@ table(d_active_test_aoi$LookAOI)
 
 Both active phases use the same AOIs:
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 d_active_train_gaze |> 
   ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
   geom_point(alpha = .025) + 
@@ -386,9 +388,127 @@ d_active_train_aoi <- d_active_train_gaze |>
   assignAOI(right_active_face_aoi, "right_scene") |> 
   mutate(LookAOI = case_when(LookAOI == "to_fill" & isLook==1 ~ "other",
                          LookAOI != "to_fill" ~ LookAOI, 
-                         TRUE ~ "off"))
+                         TRUE ~ "off")) |> 
+  select(-c(GazePointXLeft:GazePointXMean))
 ```
 
 ```{r}
 table(d_active_train_aoi$LookAOI)
 ```
+
+## Regularize Time Bins
+
+#### Active Training Trials
+
+```{r}
+d_active_train_aoi_binned <- d_active_train_aoi |>  
+  normalizeTimeMS() |> 
+  group_by(subject_id, trial_type_id) |> 
+  group_modify(~rezeroTrials(.x)) |> 
+  group_modify((~createTimeBins(.x)))
+
+# Save messaging by timepoint
+
+d_active_train_event_timepoints <- d_active_train_aoi_binned |> 
+  filter(Event != "" & !is.na(Event)) |> 
+  group_by(subject_id, trial_type_id, TimeBin, TimeBinMs) |> 
+  summarize(Events = paste0(sort(unique(Event)), collapse = "_"))
+```
+
+#### Passive Training Trials
+
+#### 
+
+```{r}
+d_training_aoi_binned <- d_training_aoi |>  
+  normalizeTimeMS() |> 
+  group_by(subject_id, trial_type_id) |> 
+  group_modify(~rezeroTrials(.x)) |> 
+  mutate(TimeStampRezeroed = TimeStampRezeroed - 2500) |> #word onset
+  group_modify((~createTimeBins(.x)))
+
+# Save messaging by timepoint
+
+d_training_event_timepoints <- d_training_aoi_binned |> 
+  filter(Event != "") |> 
+  group_by(subject_id, trial_type_id, TimeBin, TimeBinMs) |> 
+  summarize(Events = paste0(sort(unique(Event)), collapse = "_"))
+```
+
+
+#### 
+
+#### Active Test Trials
+
+```{r}
+d_active_test_aoi_binned <- d_active_test_aoi |>  
+  normalizeTimeMS()|> 
+  group_by(subject_id, trial_type_id) |> 
+  group_modify(~rezeroTrials(.x)) |> 
+  group_modify((~createTimeBins(.x)))
+
+# Save messaging by timepoint
+
+d_active_test_event_timepoints <- d_active_test_aoi_binned |> 
+  filter(Event != "") |> 
+  group_by(subject_id, trial_type_id, TimeBin, TimeBinMs) |> 
+  summarize(Events = paste0(sort(unique(Event)), collapse = "_"))
+```
+
+## Interpolate Gaps
+
+#### Active Training Trials
+
+```{r}
+d_final_active_training_aoi <- 
+  d_active_train_aoi_binned |> 
+  InterpolateMissingAOI() |> 
+  group_by(subject_id, trial_type_id, TimeBin, TimeBinMs, Event) |> 
+  slice_head(n = 1) |> 
+  left_join(d_subjects) |> 
+  left_join(d_active_train_trials)
+```
+
+#### Training Trials
+
+```{r}
+d_final_training_aoi <- 
+  d_training_aoi_binned |> 
+  InterpolateMissingAOI() |> 
+  group_by(subject_id, trial_type_id, TimeBin, TimeBinMs, Event) |> 
+  slice_head(n = 1)|> 
+  left_join(d_subjects) |> 
+  left_join(d_passive_training_trials)
+```
+
+#### Test Trials
+
+```{r}
+d_final_test_aoi <- 
+  d_active_test_aoi_binned |> 
+  InterpolateMissingAOI() |> 
+  group_by(subject_id, trial_type_id, TimeBin, TimeBinMs, Event) |> 
+  slice_head(n = 1) |> 
+  left_join(d_subjects) |> 
+  left_join(d_active_test_trials)
+```
+
+# Rejoin Trial and Subject Information
+
+```{r}
+View(d_final_active_training_aoi |> left_join(d_subjects) |> left_join(d_active_train_trials))
+```
+
+
+# Write Data
+
+```{r}
+write_file_location <- "gazeData/pilot_1"
+
+d_final_active_training_aoi |> write_csv(file = here("analysis", write_file_location, "active_training_aois.csv"))
+d_final_training_aoi |> write_csv(file = here("analysis", write_file_location, "training_aois.csv"))
+d_final_test_aoi |> write_csv(file = here("analysis", write_file_location, "training_aois.csv"))
+
+d_subjects
+```
+

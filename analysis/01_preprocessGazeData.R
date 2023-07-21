@@ -33,11 +33,13 @@
 
 integrateEventData <- function(filename, skipnum = 7){
   # read raw csv for Tobii output
+  print(filename)
   d_raw_gaze <- read.csv(filename, sep="\t", skip = skipnum)
   d_raw_gaze <- d_raw_gaze |> select(TimeStamp, Event, 
                                      GazePointXLeft, GazePointYLeft, ValidityLeft, 
                                      GazePointXRight, GazePointYRight, ValidityRight,
                                      GazePointX, GazePointY)
+  d_raw_gaze$TimeStamp_num <- as.numeric(d_raw_gaze$TimeStamp)
   #select rows with trial information
   d_trial_info <- d_raw_gaze |> 
     filter(grepl("Experiment", d_raw_gaze$Event)) |> 
@@ -129,24 +131,7 @@ processGazeData <- function(gazedata, monitor_x = 1024, monitor_y = 768){
 }
 
 
-rezeroTrainingTrials <- function(df_trial){
-  startScreenTimepoint <- df_trial |> filter(Event == "startScreen") |> pull(TimeStamp)
-  df_trial <- df_trial |> 
-    mutate(TimeStampRezeroed = TimeStamp - startScreenTimepoint) 
-  df_trial
-}
 
-createTimeBins=function(gazedata,ms_per_frame=1000/60) {
-  #Bin TimeStamps with slight ms level variations on different trials into time bins
-  gazedata$TimeBin=round(gazedata$TimeStamp/ms_per_frame,0)
-  
-  #Create ms equivalents of time bins
-  gazedata$TimeBinMs=gazedata$TimeBin*ms_per_frame
-  
-  #TODO: As an agnostic measure, take the first row for any timebin with multiple looks - rethink if this should be the averaged look across the XY
-  #Q: How many ties are there, and are there big differences between the positions in any of these?
-  gazedata |> select(TimeStamp, TimeBin, TimeBinMs, everything())
-}
 
 assignAOI <- function(gazedata, aoi_coordinates, aoi_label){
   gazedata |> 
@@ -165,60 +150,31 @@ normalizeTimeMS=function(gazedata){
                                           NA)) |> 
     fill(trial_start_timestamp) |> 
     mutate(normalizedTimeStamp = TimeStamp - trial_start_timestamp) |> 
-    select(-trial_start_timestamp)
+    select(TimeStamp, normalizedTimeStamp, everything(), -trial_start_timestamp)
   
   return(normalized_time)
 }
 
 
-resample_xy_trial <- function(df_trial) {
-  MISSING_CONST <- -10000
-  ms_per_frame=1000/60
-  t_origin <- df_trial$TimeStampRezeroed
-  x_origin <- df_trial$GazePointX
-  y_origin <- df_trial$GazePointY
-  
-  # create the new timestamps for resampling
-  t_start <- round(min(t_origin)/ms_per_frame, 0) * ms_per_frame
-  #t_start <- min(t_origin) - (min(t_origin) %% 1000/60)
-  t_resampled <- seq(from = t_start, to = max(t_origin),
-                     by = 1000/60)
-  
-  # because of the behavior of approx, we need numerical values for missingness
-  x_origin[is.na(x_origin)] <- MISSING_CONST
-  y_origin[is.na(y_origin)] <- MISSING_CONST
-  
-  # resample we use constant interpolation for two reasons: 1) the numerical
-  # missingness needs to be constant, if you interpolate it you won't be able to
-  # back it out, 2) linear interpolation might "slow down" saccades by choosing
-  # intermediate locations (minor).
-  x_resampled <- stats::approx(x = t_origin, y = x_origin, xout = t_resampled,
-                               method = "constant", rule = 2,
-                               ties = "ordered")$y
-  y_resampled <- stats::approx(x = t_origin, y = y_origin, xout = t_resampled,
-                               method = "constant", rule = 2,
-                               ties = "ordered")$y
-  
-  # replace missing values
-  x_resampled[x_resampled == MISSING_CONST] <- NA
-  y_resampled[y_resampled == MISSING_CONST] <- NA
-  
-  # adding back the columns to match schema
-  # note, no IDs here because they won't be unique.
-  dplyr::tibble(trial_number = df_trial$trial_number[1],
-                subjCode = df_trial$subjCode[1],
-                t_resampled,
-                x = x_resampled,
-                y = y_resampled)
+rezeroTrials <- function(df_trial){
+  startScreenTimepoint <- df_trial |> filter(Event == "startScreen") |> pull(normalizedTimeStamp)
+  df_trial <- df_trial |> 
+    mutate(TimeStampRezeroed = normalizedTimeStamp - startScreenTimepoint) 
+  df_trial |> select(TimeStamp, normalizedTimeStamp, TimeStampRezeroed, everything())
 }
 
-recenterTrainingTrialTimebins <- function(df_trial){
-  # For each trial, there will be a start screen message. 
-  # Subtract the timepoint of this message from the rest of the trial to recenter at the 
-  # start of the screen flip/video.
-  df_trial |> 
-    filter(Event == "presentAGMovie" | Event == "startScreen") |> 
-    pull(TimeStamp)
-    
+
+createTimeBins=function(gazedata,ms_per_frame=1000/60) {
+  #Bin TimeStamps with slight ms level variations on different trials into time bins
+  gazedata$TimeBin=round(gazedata$TimeStampRezeroed/ms_per_frame,0)
+  
+  #Create ms equivalents of time bins
+  gazedata$TimeBinMs=gazedata$TimeBin*ms_per_frame
+  
+  # create skeleton dataframe to generate missing rows
+  gazedata_skeleton = tibble(TimeBin = seq(min(gazedata$TimeBin), max(gazedata$TimeBin)+1)) 
+  gazedata_skeleton$TimeBinMs=gazedata_skeleton$TimeBin*ms_per_frame
+  
+  gazedata_skeleton |> left_join(gazedata |> select(TimeStampRezeroed, TimeBin, TimeBinMs, everything()), by = join_by(TimeBin, TimeBinMs))
 }
 
