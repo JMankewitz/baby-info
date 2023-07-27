@@ -1,0 +1,403 @@
+---
+title: "pilot_1_analysis"
+format: html
+editor: visual
+---
+
+This will outline the intended analysis of my FYP project "BabyInfo", which explores how toddlers may or may not actively sample informative speakers in their environment.
+
+# Setup
+
+```{r}
+library(here)
+library(tidyverse)
+
+read_file_path <- "preprocessedGazeData/pilot_1"
+image_path <- "images/pilot_1"
+```
+
+# Load Preprocessed Gaze Data
+
+These data are in 3 different files for the 3 types of trials: 1) **Active Training**: Short 30s training phase with images of scenes. When toddlers turn their gaze towards one of the images, a different baby-friendly instrumental song plays depending on which image they look at.
+
+2)  **Training**: A familiarization phase with 8 trials (split into 2 blocks). The speakers trade off directing the toddler to look at one of two objects on the screen. One speaker consistantly labels an object that is present and another speaker gives the name of an object that is not present.
+
+3)  **Active Test**: 2 trials of gaze-contingent sampling where the toddlers can use their gaze to hear one of two speakers label a novel object.
+
+```{r}
+d_active_training <- read_csv(here("analysis", read_file_path, "active_training_aois.csv"))
+d_training <- read_csv(here("analysis", read_file_path, "training_aois.csv"))
+d_active_test <- read_csv(here("analysis", read_file_path, "active_test_aois.csv"))
+```
+
+# Coherence Checks
+
+## Valid AOIs
+
+Are the toddlers' XY gaze points approximately within the bounds of the expected AOIs (checks calibration)
+
+### Active/Contingent AOIs
+
+```{r}
+active_width = c(-140, 140)
+active_height = c(-200, 200)
+left_active_coords = c(190, 384)
+right_active_coords = c(834, 384)
+
+left_active_face_aoi = list(left_active_coords[[1]] + active_width, 
+                    left_active_coords[[2]] + active_height)
+right_active_face_aoi = list(right_active_coords[[1]] + active_width, 
+                    right_active_coords[[2]] + active_height)
+
+# coordinates for objects if we want to see proportion to novel objects in the future
+active_novel_width = c(-75, 75)
+active_novel_height = c(-65, 65)
+left_active_novel_coords = c(190, 268)
+right_active_novel_coords = c(834, 268)
+
+left_active_novel_aoi = list(left_active_novel_coords[[1]] + active_novel_width, 
+                    left_active_novel_coords[[2]] + active_novel_height)
+right_active_novel_aoi = list(right_active_novel_coords[[1]] + active_novel_width, 
+                    right_active_novel_coords[[2]] + active_novel_height)
+```
+
+### Training/Familiarization AOIs
+
+```{r}
+screen_x_max = 1024
+screen_y_max = 768
+
+obj_area_width = c(-100, 100)
+obj_area_height = c(-100, 100)
+left_obj_coords = c(256, 203)
+right_obj_coords = c(768, 203)
+
+face_area_width = c(-100, 100)
+face_area_height = c(-150, 150)
+left_face_coords = c(256, 500)
+right_face_coords = c(768, 500)
+
+left_obj_aoi = list(left_obj_coords[[1]] + obj_area_width, 
+                    left_obj_coords[[2]] + obj_area_height)
+right_obj_aoi = list(right_obj_coords[[1]] + obj_area_width, 
+                    right_obj_coords[[2]] + obj_area_height)
+left_face_aoi = list(left_face_coords[[1]] + face_area_width, 
+                    left_face_coords[[2]] + face_area_height)
+right_face_aoi = list(right_face_coords[[1]] + face_area_width, 
+                    right_face_coords[[2]] + face_area_height)
+```
+
+### Active Training Gaze Location Check
+
+```{r}
+d_active_training |> 
+  ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
+  geom_point(alpha = .025) + 
+  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
+            color = "black", fill = NA) +
+  geom_rect(aes(xmin=left_active_face_aoi[[1]][[1]], xmax=left_active_face_aoi[[1]][[2]], 
+                ymin=left_active_face_aoi[[2]][[1]], ymax=left_active_face_aoi[[2]][[2]]), 
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_active_face_aoi[[1]][[1]], xmax=right_active_face_aoi[[1]][[2]], 
+                ymin=right_active_face_aoi[[2]][[1]], ymax=right_active_face_aoi[[2]][[2]]), 
+            color = "black",fill=NA) +
+  theme_classic() + 
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
+```
+
+### Training
+
+```{r}
+d_training |> 
+  ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
+  geom_point(alpha = .025) + 
+  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
+            color = "black", fill = NA) +
+  geom_rect(aes(xmin=left_obj_aoi[[1]][[1]], xmax=left_obj_aoi[[1]][[2]], 
+                ymin=left_obj_aoi[[2]][[1]], ymax=left_obj_aoi[[2]][[2]]), 
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_obj_aoi[[1]][[1]], xmax=right_obj_aoi[[1]][[2]], 
+                ymin=right_obj_aoi[[2]][[1]], ymax=right_obj_aoi[[2]][[2]]), 
+            color = "black",fill=NA)+
+  geom_rect(aes(xmin=left_face_aoi[[1]][[1]], xmax=left_face_aoi[[1]][[2]], 
+                ymin=left_face_aoi[[2]][[1]], ymax=left_face_aoi[[2]][[2]]),
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_face_aoi[[1]][[1]], xmax=right_face_aoi[[1]][[2]], 
+                ymin=right_face_aoi[[2]][[1]], ymax=right_face_aoi[[2]][[2]]),
+            color = "black", fill=NA) +
+  theme_classic() + 
+  facet_wrap(~speakerType) +
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
+```
+
+### Active Test
+
+```{r}
+d_active_test |> 
+  ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
+  geom_point(alpha = .025) + 
+  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
+            color = "black", fill = NA) +
+  geom_rect(aes(xmin=left_active_face_aoi[[1]][[1]], xmax=left_active_face_aoi[[1]][[2]], 
+                ymin=left_active_face_aoi[[2]][[1]], ymax=left_active_face_aoi[[2]][[2]]), 
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_active_face_aoi[[1]][[1]], xmax=right_active_face_aoi[[1]][[2]], 
+                ymin=right_active_face_aoi[[2]][[1]], ymax=right_active_face_aoi[[2]][[2]]), 
+            color = "black",fill=NA)+
+  geom_rect(aes(xmin=left_active_novel_aoi[[1]][[1]], xmax=left_active_novel_aoi[[1]][[2]], 
+                ymin=left_active_novel_aoi[[2]][[1]], ymax=left_active_novel_aoi[[2]][[2]]),
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_active_novel_aoi[[1]][[1]], xmax=right_active_novel_aoi[[1]][[2]], 
+                ymin=right_active_novel_aoi[[2]][[1]], ymax=right_active_novel_aoi[[2]][[2]]),
+            color = "black", fill=NA) +
+  theme_classic() + 
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
+```
+
+## Valid Interpolation
+
+```{r}
+d_active_training |> 
+  ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(LookAOI))) +
+  geom_point(alpha = .025) + 
+  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
+            color = "black", fill = NA) +
+  geom_rect(aes(xmin=left_active_face_aoi[[1]][[1]], xmax=left_active_face_aoi[[1]][[2]], 
+                ymin=left_active_face_aoi[[2]][[1]], ymax=left_active_face_aoi[[2]][[2]]), 
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_active_face_aoi[[1]][[1]], xmax=right_active_face_aoi[[1]][[2]], 
+                ymin=right_active_face_aoi[[2]][[1]], ymax=right_active_face_aoi[[2]][[2]]), 
+            color = "black",fill=NA) +
+  theme_classic() + 
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
+```
+
+### Training
+
+```{r}
+d_training |> 
+  ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(LookAOI))) +
+  geom_point(alpha = .025) + 
+  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
+            color = "black", fill = NA) +
+  geom_rect(aes(xmin=left_obj_aoi[[1]][[1]], xmax=left_obj_aoi[[1]][[2]], 
+                ymin=left_obj_aoi[[2]][[1]], ymax=left_obj_aoi[[2]][[2]]), 
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_obj_aoi[[1]][[1]], xmax=right_obj_aoi[[1]][[2]], 
+                ymin=right_obj_aoi[[2]][[1]], ymax=right_obj_aoi[[2]][[2]]), 
+            color = "black",fill=NA)+
+  geom_rect(aes(xmin=left_face_aoi[[1]][[1]], xmax=left_face_aoi[[1]][[2]], 
+                ymin=left_face_aoi[[2]][[1]], ymax=left_face_aoi[[2]][[2]]),
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_face_aoi[[1]][[1]], xmax=right_face_aoi[[1]][[2]], 
+                ymin=right_face_aoi[[2]][[1]], ymax=right_face_aoi[[2]][[2]]),
+            color = "black", fill=NA) +
+  theme_classic() + 
+  facet_wrap(~speakerType) +
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
+```
+
+### Active Test
+
+```{r}
+d_active_test |> 
+  ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(LookAOI))) +
+  geom_point(alpha = .025) + 
+  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
+            color = "black", fill = NA) +
+  geom_rect(aes(xmin=left_active_face_aoi[[1]][[1]], xmax=left_active_face_aoi[[1]][[2]], 
+                ymin=left_active_face_aoi[[2]][[1]], ymax=left_active_face_aoi[[2]][[2]]), 
+            color = "black", fill=NA) +
+  geom_rect(aes(xmin=right_active_face_aoi[[1]][[1]], xmax=right_active_face_aoi[[1]][[2]], 
+                ymin=right_active_face_aoi[[2]][[1]], ymax=right_active_face_aoi[[2]][[2]]), 
+            color = "black",fill=NA)+
+  theme_classic() + 
+  guides(color = guide_legend(override.aes = list(alpha = 1)))
+```
+
+## Manipulation Check
+
+During the speaker training phase, we should expect the toddlers to recognize the words and look at the respective objects.
+
+```{r}
+# match the AOIs to the different object/speaker roles so I can compare across trials and participants
+
+d_training <- d_training |> 
+  mutate(directedAOI = case_when(LookAOI == "left_face" ~ leftSpeakerType,
+                                 LookAOI == "right_face" ~ rightSpeakerType,
+                                 LookAOI == "left_obj" & targetSide == "left" ~ "target",
+                                 LookAOI == "left_obj" & targetSide == "right" ~ "distractor",
+                                 LookAOI == "right_obj" & targetSide == "right" ~ "target",
+                                 LookAOI == "right_obj" & targetSide == "left" ~ "distractor",
+                                 TRUE ~ LookAOI))
+
+# Order the factor
+
+d_training$AOI_factor <- factor(d_training$directedAOI,
+                                levels = c("reliable", "unreliable", "target", "distractor", "other", NA))
+
+
+prop_aois <- d_training |> 
+  #filter out NA
+  filter(!is.na(AOI_factor)) |> 
+  group_by(subjCode,speakerType, participant_group, AOI_factor) |> 
+  summarize(n = n()) |> 
+  mutate(prop = n / sum(n))
+
+d_training |> 
+  ggplot(aes(x = AOI_factor)) + 
+    geom_bar() + 
+  theme_classic() + 
+  facet_wrap(~speakerType)
+
+d_training |> 
+  ggplot(aes(x = AOI_factor)) + 
+    geom_bar() + 
+  theme_classic() + 
+  facet_grid(cols = vars(subjCode), rows = vars(speakerType)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+prop_aois |> ggplot(aes(x = AOI_factor, y = prop, fill = AOI_factor)) + 
+  geom_bar(stat = "identity") + 
+  facet_grid(cols = vars(subjCode), rows = vars(speakerType))+ 
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
+  scale_fill_manual(values = c("other" = "gray",
+                                "reliable"="#ffbe0b",
+                                "unreliable"="#ff006e",
+                                "target" = "#8338ec",
+                                "distractor" = "#3a86ff")) + 
+  labs(title = "Proportion Looking to Area of Interest", subtitle = "by subject and familiarization trial type", x = "Area of Interest (AOI)", y = "Proportion of Time Looking")
+
+prop_aois |> ggplot(aes(x = AOI_factor, y = prop, fill = participant_group)) + 
+  geom_bar(stat = "identity") + 
+  facet_grid(cols = vars(subjCode), rows = vars(speakerType))+ 
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) 
+```
+
+## Basic Timecourse
+
+### Passive Training
+
+```{r}
+d_training |> 
+  filter(!is.na(AOI_factor), TimeBinMs < 4000) |> 
+  ggplot(aes(x = TimeBinMs, y = AOI_factor, color = AOI_factor)) + 
+  geom_point(alpha = .025) + 
+  theme_classic() + 
+  facet_grid(rows = vars(subjCode), cols = vars(speakerType)) + 
+  guides(color = guide_legend(override.aes = list(alpha = 1))) + 
+  geom_vline(xintercept = 0, linetype = "dotted") + 
+  labs(title = "AOIs over Time", subtitle = "Per Subject and Speaker Type", y = "AOI", x = "Time (MS)") + 
+  scale_color_manual(values = c("other" = "gray",
+                                "reliable"="#ffbe0b",
+                                "unreliable"="#ff006e",
+                                "target" = "#8338ec",
+                                "distractor" = "#3a86ff")) 
+
+d_training |> 
+  filter(!is.na(AOI_factor), TimeBinMs < 4000) |> 
+  ggplot(aes(x = TimeBinMs, y = AOI_factor, color = AOI_factor)) + 
+  geom_point(alpha = .01) + 
+  theme_classic() + 
+  facet_grid(cols = vars(speakerType)) + 
+  guides(color = guide_legend(override.aes = list(alpha = 1))) + 
+  geom_vline(xintercept = 0, linetype = "dotted") + 
+  labs(title = "AOIs over Time", subtitle = "Per Subject and Speaker Type", y = "AOI", x = "Time (MS)") + 
+  scale_color_manual(values = c("other" = "gray",
+                                "reliable"="#ffbe0b",
+                                "unreliable"="#ff006e",
+                                "target" = "#8338ec",
+                                "distractor" = "#3a86ff")) 
+```
+
+```{r}
+d_active_test <- d_active_test |> 
+  mutate(directedAOI = case_when(LookAOI == "left_speaker" ~ leftSpeakerType,
+                                 LookAOI == "right_speaker" ~ rightSpeakerType,
+                                 TRUE ~ LookAOI),
+         sample_phase = paste0("Sample Phase: ", trial_type_id))
+
+d_active_test$AOI_factor <- factor(d_active_test$directedAOI,
+                                levels = c("reliable", "unreliable", "other", NA))
+d_active_test |> 
+  #filter(!is.na(AOI_factor), TimeBinMs < 4000) |> 
+  ggplot(aes(x = TimeBinMs, y = AOI_factor, color = AOI_factor)) + 
+  geom_point(alpha = .025) + 
+  #theme_classic() + 
+  facet_grid(rows = vars(subjCode), cols = vars(sample_phase)) + 
+  guides(color = guide_legend(override.aes = list(alpha = 1))) + 
+  geom_vline(xintercept = 1000, linetype = "dotted") + 
+  labs(title = "AOIs over Time", subtitle = "Per Subject and Sampling Phase", y = "AOI", x = "Time (MS)") + 
+  scale_color_manual(values = c("other" = "gray",
+                                "reliable"="#ffbe0b",
+                                "unreliable"="#ff006e",
+                                "target" = "#8338ec",
+                                "distractor" = "#3a86ff")) + 
+  theme_bw()
+```
+
+Try overplotting the *actual* logged sounds and triggers to see if they allign
+
+(how much within-sound switching are we seeing, do I need to futz with that?)
+
+```{r}
+View(d_active_test)
+
+d_active_selections <- d_active_test |>  left_join(d_active_test %>% 
+  filter(grepl("selection", Event) | grepl("audioEnd", Event)) |> 
+  rename(selectionEvent = Event) |> 
+    separate(selectionEvent, into = c("selectionEvent", "selection"))) |> 
+  select(TimeBin, subject_id, trial_type_id, selectionEvent, selection) |> 
+ group_by(grp = cumsum(!is.na(selectionEvent))) %>% 
+ mutate(ongoing_selection = first(selection)) %>% 
+ ungroup() %>% 
+ select(-grp, -selectionEvent, -selection)
+
+
+View(d_active_test |> left_join(d_active_selections))
+```
+
+```{r}
+d_active_training <- d_active_training |> 
+  mutate(directedAOI = case_when(LookAOI == "left_scene" ~ leftImage,
+                                 LookAOI == "right_scene" ~ rightImage,
+                                 TRUE ~ LookAOI),
+         sample_phase = paste0("Sample Phase: ", trial_type_id))
+
+d_active_training$AOI_factor <- factor(d_active_training$directedAOI,
+                                levels = c("balloons_1", "waterfall_1", "other", NA))
+d_active_training |> 
+  #filter(!is.na(AOI_factor), TimeBinMs < 4000) |> 
+  ggplot(aes(x = TimeBinMs, y = AOI_factor, color = AOI_factor)) + 
+  geom_point(alpha = .025) + 
+  #theme_classic() + 
+  facet_grid(rows = vars(subject_id)) + 
+  guides(color = guide_legend(override.aes = list(alpha = 1))) + 
+  geom_vline(xintercept = 1000, linetype = "dotted") + 
+  labs(title = "AOIs over Time", subtitle = "Per Subject and Sampling Phase", y = "AOI", x = "Time (MS)") +
+  scale_color_manual(values = c("other" = "gray",
+                                "waterfall_1"="#ffbe0b",
+                                "balloons_1"="#ff006e"))
+```
+
+Keeping just the subjects who didn't have a lot of NAs, what does sampling look like?
+
+```{r}
+data_subj <- c(1, 2, 3, 5, 6)
+d_active_test |> 
+  filter(subject_id %in% data_subj) |> 
+  ggplot(aes(x = AOI_factor, fill = directedAOI)) + 
+  geom_bar() + 
+  facet_grid(rows = vars(subjCode), cols = vars(sample_phase)) + 
+  guides(color = guide_legend(override.aes = list(alpha = 1))) + 
+  geom_vline(xintercept = 1000, linetype = "dotted") + 
+  labs(title = "AOIs over Time", subtitle = "Per Subject and Sampling Phase", x = "AOI", y = "Time (MS)") + 
+  scale_fill_manual(values = c("other" = "gray",
+                                "reliable"="#ffbe0b",
+                                "unreliable"="#ff006e",
+                                "target" = "#8338ec",
+                                "distractor" = "#3a86ff")) + 
+  theme_bw()
+```

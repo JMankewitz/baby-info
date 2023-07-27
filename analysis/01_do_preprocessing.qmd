@@ -288,7 +288,7 @@ d_training_aoi <- d_training_gaze |>
   mutate(LookAOI = case_when(LookAOI == "to_fill" & isLook==1 ~ "other",
                          LookAOI != "to_fill" ~ LookAOI, 
                          TRUE ~ "off"))|> 
-  select(-c(GazePointXLeft:GazePointXMean))
+  select(-c(GazePointXLeft:TimeStamp_num))
 ```
 
 ```{r}
@@ -354,7 +354,7 @@ d_active_test_aoi <- d_active_test_gaze |>
   mutate(LookAOI = case_when(LookAOI == "to_fill" & isLook==1 ~ "other",
                          LookAOI != "to_fill" ~ LookAOI, 
                          TRUE ~ "off"))|> 
-  select(-c(GazePointXLeft:GazePointXMean))
+  select(-c(GazePointXLeft:TimeStamp_num))
 ```
 
 ```{r}
@@ -389,7 +389,7 @@ d_active_train_aoi <- d_active_train_gaze |>
   mutate(LookAOI = case_when(LookAOI == "to_fill" & isLook==1 ~ "other",
                          LookAOI != "to_fill" ~ LookAOI, 
                          TRUE ~ "off")) |> 
-  select(-c(GazePointXLeft:GazePointXMean))
+  select(-c(GazePointXLeft:TimeStamp_num))
 ```
 
 ```{r}
@@ -493,22 +493,14 @@ d_final_test_aoi <-
   left_join(d_active_test_trials)
 ```
 
-# Rejoin Trial and Subject Information
-
-```{r}
-View(d_final_active_training_aoi |> left_join(d_subjects) |> left_join(d_active_train_trials))
-```
-
-
 # Write Data
 
 ```{r}
-write_file_location <- "gazeData/pilot_1"
+write_file_location <- "preprocessedGazeData/pilot_1"
 
 d_final_active_training_aoi |> write_csv(file = here("analysis", write_file_location, "active_training_aois.csv"))
 d_final_training_aoi |> write_csv(file = here("analysis", write_file_location, "training_aois.csv"))
-d_final_test_aoi |> write_csv(file = here("analysis", write_file_location, "training_aois.csv"))
+d_final_test_aoi |> write_csv(file = here("analysis", write_file_location, "active_test_aois.csv"))
 
-d_subjects
 ```
 
