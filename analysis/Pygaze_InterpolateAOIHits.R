@@ -15,8 +15,7 @@ Gap <- function(start, end, na_size) {
 
 
 # Interpolate a single gap
-fill_gap <- function(trial, gap,accuracies,AOIs) {
-  trial$Accuracy[gap$na_seq]=accuracies[gap$start]
+fill_gap <- function(trial, gap,AOIs) {
   trial$LookAOI[gap$na_seq]=AOIs[gap$start]
   trial$numInterpolatedPoints[gap$na_seq]=gap$na_size
   trial$isInterpolatedFrame[gap$na_seq]=1
@@ -38,16 +37,20 @@ fill_gap <- function(trial, gap,accuracies,AOIs) {
 # accuracies[2672:2676]
 # AOIs[2672:2676]
 
+# For each trial
+
+
+# Tidyverse this
 InterpolateMissingAOI = function(trial) {
-  trial$LookAOI[trial$LookAOI=='away']=NA
+  trial$LookAOI[trial$LookAOI=='off']=NA
   trial$numInterpolatedPoints=0
   trial$isInterpolatedFrame=0
   trial$isTracked = 'yes'
   trial$isTracked[is.na(trial$LookAOI)]= NA
   # Extract the gazes from the trial. Record how many missing frames there are.
-  accuracies = trial$Accuracy
+  accuracies = trial$LookAOI # was 1 or 0 for target or distractor, need to generalize to >2 AOIs
   AOIs = trial$LookAOI
-  trialnums = trial$TrialNumber
+  trialnums = trial$trial_type_id
   gazes <- trial$isTracked
   missing <- sum(is.na(AOIs))
   # Grab all the non-NA gaze frames.
@@ -76,15 +79,15 @@ InterpolateMissingAOI = function(trial) {
   # involve first frame and gaps with the gaze location on both sides of window
   has_legal_length <- function(gap) gap$na_size <= frames_in_window
   is_not_first_frame <- function(gap) gap$start != 0
-  is_fillable <- function(gap) accuracies[gap$start] == accuracies[gap$end]
-  is_same_trial <- function(gap) trialnums[gap$start] == trialnums[gap$end] 
+  is_fillable <- function(gap) AOIs[gap$start] == AOIs[gap$end] # start and end of gap are same AOI
+  is_same_trial <- function(gap) trialnums[gap$start] == trialnums[gap$end] # within the same trial
   gaps <- Filter(has_legal_length, gaps)
-  gaps <- Filter(is_not_first_frame, gaps)
-  gaps <- Filter(is_fillable, gaps)
-  gaps <- Filter(is_same_trial,gaps)
+  #gaps <- Filter(is_not_first_frame, gaps)
+  #gaps <- Filter(is_fillable, gaps)
+  #gaps <- Filter(is_same_trial,gaps)
   # Fill each gap
   for (gap in gaps) {
-    trial <- fill_gap(trial, gap,accuracies,AOIs)
+    trial <- fill_gap(trial, gap,AOIs)
   }
   trial
 }
