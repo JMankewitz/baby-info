@@ -387,10 +387,36 @@ Keeping just the subjects who didn't have a lot of NAs, what does sampling look 
 ```{r}
 data_subj <- c(1, 2, 3, 5, 6)
 d_active_test |> 
-  filter(subject_id %in% data_subj) |> 
+  #filter(subject_id %in% data_subj) |> 
   ggplot(aes(x = AOI_factor, fill = directedAOI)) + 
   geom_bar() + 
   facet_grid(rows = vars(subjCode), cols = vars(sample_phase)) + 
+  guides(color = guide_legend(override.aes = list(alpha = 1))) + 
+  geom_vline(xintercept = 1000, linetype = "dotted") + 
+  labs(title = "AOIs over Time", subtitle = "Per Subject and Sampling Phase", x = "AOI", y = "Time (MS)") + 
+  scale_fill_manual(values = c("other" = "gray",
+                                "reliable"="#ffbe0b",
+                                "unreliable"="#ff006e",
+                                "target" = "#8338ec",
+                                "distractor" = "#3a86ff")) + 
+  theme_bw()
+
+d_active_test_by_subj <- d_active_test |> 
+  group_by(subject_id, sample_phase, AOI_factor) |> 
+  summarize(n_frames = n())
+
+d_active_test_by_phase <- d_active_test_by_subj |> 
+  group_by(sample_phase, AOI_factor) |> 
+  summarize(mean_frames = mean(n_frames),
+            sd_frames = sd(n_frames))
+
+d_active_test_by_phase |> 
+  #filter(subject_id %in% data_subj) |> 
+  ggplot(aes(x = AOI_factor, y = mean_frames, fill = AOI_factor)) + 
+  geom_bar(stat = "identity") + 
+  geom_line(data = d_active_test_by_subj, aes(y = n_frames, group = subject_id), alpha = .5) +
+  geom_point(data = d_active_test_by_subj, aes(y = n_frames, group = subject_id), alpha = .5) +
+  facet_grid( cols = vars(sample_phase)) + 
   guides(color = guide_legend(override.aes = list(alpha = 1))) + 
   geom_vline(xintercept = 1000, linetype = "dotted") + 
   labs(title = "AOIs over Time", subtitle = "Per Subject and Sampling Phase", x = "AOI", y = "Time (MS)") + 

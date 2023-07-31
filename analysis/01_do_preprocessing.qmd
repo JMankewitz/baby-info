@@ -435,7 +435,6 @@ d_training_event_timepoints <- d_training_aoi_binned |>
   summarize(Events = paste0(sort(unique(Event)), collapse = "_"))
 ```
 
-
 #### 
 
 #### Active Test Trials
@@ -503,4 +502,3 @@ d_final_training_aoi |> write_csv(file = here("analysis", write_file_location, "
 d_final_test_aoi |> write_csv(file = here("analysis", write_file_location, "active_test_aois.csv"))
 
 ```
-
