@@ -174,7 +174,7 @@ class ExpPresentation(Exp):
 
 		# Load Trials
 		familiarizationTrialPath = 'orders/trialOrders/BabyInfo_Order' + self.experiment.subjVariables['order'] +".csv"
-		activeTrainingTrialPath = 'orders/activeTrainingOrders/BabyInfo_ActiveTrainingOrdertest.csv'
+		activeTrainingTrialPath = 'orders/activeTrainingOrders/BabyInfo_ActiveTrainingOrder' + self.experiment.subjVariables['order'] +".csv"
 		activeTestTrialPath = 'orders/activeOrders/BabyInfo_ActiveOrder' + self.experiment.subjVariables['order'] +".csv"
 
 		(self.familTrialListMatrix, self.trialFieldNames) = importTrials(familiarizationTrialPath, method="sequential")
@@ -186,7 +186,7 @@ class ExpPresentation(Exp):
 		self.soundMatrix = loadFiles(self.experiment.soundPath, ['.mp3'], 'sound')
 		self.AGsoundMatrix = loadFiles(self.experiment.AGPath, ['.mp3'], 'sound')
 		self.activeSoundMatrix = loadFiles(self.experiment.activeSoundPath, ['.mp3'], 'sound')
-		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png'], 'image', win = self.experiment.win)
+		self.imageMatrix = loadFiles(self.experiment.imagePath, ['.png', ".jpg"], 'image', win = self.experiment.win)
 		self.stars = loadFiles(self.experiment.AGPath, ['.jpg'], 'image', self.experiment.win)
 
 		self.locations = ['left', 'right']
@@ -253,6 +253,9 @@ class ExpPresentation(Exp):
 				if curTrial['trialType'] == 'AG':
 					self.presentAGTrial(curTrial, self.trialFieldNames, getInput = "no", duration = curTrial['AGTime'])
 					self.experiment.win.flip()
+				if curTrial['trialType'] == 'PauseAG':
+					self.presentAGTrial(curTrial, self.trialFieldNames ,getInput = "yes", duration = 0)
+					self.experiment.win.flip()
 				curFamilTrialIndex += 1
 
 		elif whichPart == "activeTraining":
@@ -294,7 +297,7 @@ class ExpPresentation(Exp):
 
 		if curTrial['AGType'] == "image":
 			# create picture
-			curPic = self.pictureMatrix[curTrial['AGImage']][0]
+			curPic = self.imageMatrix[curTrial['AGImage']][0]
 			# position in center of screen
 			curPic.pos = self.pos['center']
 			# create screen
@@ -722,7 +725,7 @@ class ExpPresentation(Exp):
 					countAway = 0
 
 				# check if the infant has switched
-				if (curLook != response and (countAway > 50000 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
+				if (curLook != response and (countAway > 1000 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
 					countLeft = 0
 					countRight = 0
 					countDiff = 0
@@ -855,7 +858,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-currentPresentation.cycleThroughTrials(whichPart = "activeTest")
+#currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
