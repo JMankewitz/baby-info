@@ -342,7 +342,6 @@ class ExpPresentation(Exp):
 
 			while mov.status != visual.FINISHED:
 				mov.draw()
-				#mov.draw()
 				self.experiment.win.flip()
 
 		# if getInput=True, wait for keyboard press before advancing
@@ -725,7 +724,7 @@ class ExpPresentation(Exp):
 					countAway = 0
 
 				# check if the infant has switched
-				if (curLook != response and (countAway > 1000 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
+				if (curLook != response and (countAway > 1000 or countDiff > 25)) or libtime.get_time() - audioTime > self.labelTime:
 					countLeft = 0
 					countRight = 0
 					countDiff = 0
@@ -858,7 +857,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-#currentPresentation.cycleThroughTrials(whichPart = "activeTest")
+currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
