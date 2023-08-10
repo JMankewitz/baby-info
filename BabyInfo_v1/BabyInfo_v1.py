@@ -607,25 +607,6 @@ class ExpPresentation(Exp):
 				else:
 					gazepos = self.lookAwayPos
 
-			elif self.experiment.subjVariables['activeMode'] == "input":
-				if self.experiment.inputDevice == 'keyboard':
-					response = self.experiment.input.get_key(keyList=[self.experiment.validResponses['2'],
-																	  self.experiment.validResponses['3']],
-															 clear=True)
-					#print(response)
-					if response != None:
-						if response == '2':
-							response = 'left'
-						elif response == '3':
-							response = 'right'
-
-					if response == 'left':
-						gazepos = (256, 384)
-					elif response == 'right':
-						gazepos = (768, 384)
-					else:
-						gazepos = self.lookAwayPos
-
 			if self.aoiLeft.contains(gazepos):
 				countLeft += 1
 				curLook = "left"
@@ -858,6 +839,6 @@ currentPresentation = ExpPresentation(currentExp)
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
-currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
