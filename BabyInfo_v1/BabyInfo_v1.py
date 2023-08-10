@@ -724,7 +724,7 @@ class ExpPresentation(Exp):
 					countAway = 0
 
 				# check if the infant has switched
-				if (curLook != response and (countAway > 1000 or countDiff > 25)) or libtime.get_time() - audioTime > self.labelTime:
+				if (curLook != response and (countAway > 3000 or countDiff > 200)) or libtime.get_time() - audioTime > self.labelTime:
 					countLeft = 0
 					countRight = 0
 					countDiff = 0
