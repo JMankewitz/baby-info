@@ -12,6 +12,10 @@ import tobii_research as tr
 from psychopy import logging
 logging.console.setLevel(logging.CRITICAL)
 
+import csv
+
+
+
 class Exp:
 	def __init__(self):
 		self.expName = "BabyInfo"
@@ -217,9 +221,9 @@ class ExpPresentation(Exp):
 		self.endSilence = 1000
 
 		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
-		self.sampleThreshold = 3
+		self.sampleThreshold = 20
 		self.lookAwayPos = (-1,-1)
-		self.labelTime = 1000000 # forever for debugging purposes
+		self.labelTime = 10000 # forever for debugging purposes
 
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)ra and dasha
 
@@ -443,6 +447,13 @@ class ExpPresentation(Exp):
 		writeToFile(self.experiment.trainingOutputFile, curLine)
 
 	def presentActiveTrial(self, curTrial, curActiveTrialIndex, trialFieldNames, stage):
+		csv_header = ["timestamp","eyetrackerLog",  "sampledLook", "avgPOS", "curLook",  "response"]
+
+		filename = 'data/' + 'training_data_' + self.experiment.subjVariables['subjCode'] + '.csv'
+
+		with open(filename, "w", newline='') as file:
+			writer = csv.writer(file)
+			writer.writerow(csv_header)
 
 		# Set up screens
 		# Active Screen(s) #
@@ -554,6 +565,13 @@ class ExpPresentation(Exp):
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
 			self.experiment.tracker.log("startContingent")
+			log_file_list = [libtime.get_time(), "startContingent", None
+							 , None, None
+							 , None]
+
+			with open(filename, 'a', newline='') as file:
+				writer = csv.writer(file)
+				writer.writerow(log_file_list)
 
 		#### Contingent Start #
 		t0 = libtime.get_time()
@@ -562,6 +580,7 @@ class ExpPresentation(Exp):
 		countRight = 0
 		countDiff = 0
 		countAway = 0
+		response = None
 		gazeCon = False
 		contingent = False
 		eventTriggered = 0
@@ -594,7 +613,7 @@ class ExpPresentation(Exp):
 				# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
 				# Edit: Changing this to 300 instead to give more smoothing breathing room
 
-				if len(lastms) > 3: #for debugging purposes...
+				if len(lastms) > 10: #for debugging purposes...
 					del (lastms[0])
 
 				# Now, remove the (no looking data) tuples
@@ -641,6 +660,13 @@ class ExpPresentation(Exp):
 					# log event
 					if self.experiment.subjVariables['eyetracker'] == 'yes':
 						self.experiment.tracker.log("selection" + str(selectionNum) + "    " + curLook)
+						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook,
+										 sampledGazePos, gazepos,
+										 curLook, response]
+
+						with open(filename, 'a', newline='') as file:
+							writer = csv.writer(file)
+							writer.writerow(log_file_list)
 					selectionTime = libtime.get_time()
 					gazeCon = True
 					contingent = True
@@ -661,6 +687,12 @@ class ExpPresentation(Exp):
 					# log event
 					if self.experiment.subjVariables['eyetracker'] == 'yes':
 						self.experiment.tracker.log("selection" + str(selectionNum) + "    " + curLook)
+						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook, sampledGazePos, gazepos,
+										 curLook, response]
+
+						with open(filename, 'a', newline='') as file:
+							writer = csv.writer(file)
+							writer.writerow(log_file_list)
 					selectionTime = libtime.get_time()
 					gazeCon = True
 					contingent = True
@@ -688,6 +720,12 @@ class ExpPresentation(Exp):
 				if self.experiment.subjVariables['eyetracker'] == "yes":
 					# log audio event
 					self.experiment.tracker.log("audio" + str(selectionNum))
+					log_file_list = [libtime.get_time(), "audio" + str(selectionNum), sampledGazePos, gazepos,
+									 curLook, response]
+
+					with open(filename, 'a', newline='') as file:
+						writer = csv.writer(file)
+						writer.writerow(log_file_list)
 
 			if eventTriggered == 1:
 
@@ -727,7 +765,17 @@ class ExpPresentation(Exp):
 						# log audio event end
 						self.experiment.tracker.log(
 							"audioEnd" + str(selectionNum))
+						log_file_list = [libtime.get_time(), "audioEnd" + str(selectionNum), sampledGazePos, gazepos, curLook, response]
 
+						with open(filename, 'a', newline='') as file:
+							writer = csv.writer(file)
+							writer.writerow(log_file_list)
+
+			log_file_list = [libtime.get_time(), None, sampledGazePos, gazepos, curLook, response]
+
+			with open(filename, 'a', newline='') as file:
+				writer = csv.writer(file)
+				writer.writerow(log_file_list)
 		if eventTriggered == 1:
 			# stop sound
 			self.activeSoundMatrix[chosenAudio].stop()
@@ -745,6 +793,7 @@ class ExpPresentation(Exp):
 			# stop eye tracking
 			self.experiment.tracker.log("stopScreen")
 			self.experiment.tracker.stop_recording()
+
 
 	def EndDisp(self):
 		# show the screen with no stars filled in
