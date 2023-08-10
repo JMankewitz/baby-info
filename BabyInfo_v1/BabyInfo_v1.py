@@ -209,7 +209,7 @@ class ExpPresentation(Exp):
 					}
 
 		# Active sampling timing stuff
-		self.timeoutTime = 20000
+		self.timeoutTime = 2000000
 		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 160), size = (355, 450))
 		self.aoiRight = aoi.AOI('rectangle', pos= (668, 160), size=(355, 450))
 		self.ISI = 1000
@@ -217,9 +217,9 @@ class ExpPresentation(Exp):
 		self.endSilence = 1000
 
 		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
-		self.sampleThreshold = 20
+		self.sampleThreshold = 3
 		self.lookAwayPos = (-1,-1)
-		self.labelTime = 10000
+		self.labelTime = 1000000 # forever for debugging purposes
 
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)ra and dasha
 
@@ -443,6 +443,7 @@ class ExpPresentation(Exp):
 		writeToFile(self.experiment.trainingOutputFile, curLine)
 
 	def presentActiveTrial(self, curTrial, curActiveTrialIndex, trialFieldNames, stage):
+
 		# Set up screens
 		# Active Screen(s) #
 		# Picture Names (should match name in left/right image column
@@ -593,7 +594,7 @@ class ExpPresentation(Exp):
 				# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
 				# Edit: Changing this to 300 instead to give more smoothing breathing room
 
-				if len(lastms) > 18:
+				if len(lastms) > 3: #for debugging purposes...
 					del (lastms[0])
 
 				# Now, remove the (no looking data) tuples
@@ -617,7 +618,7 @@ class ExpPresentation(Exp):
 				curLook = "away"
 			else:
 				curLook = "none"
-			print(curLook)
+			#print(curLook)
 
 			# If an event has already been triggered, it can not be the first trigger
 			if eventTriggered == 1:
@@ -679,7 +680,7 @@ class ExpPresentation(Exp):
 				# Start audio
 
 				self.activeSoundMatrix[chosenAudio].setLoops(-1)
-				print(self.activeSoundMatrix[chosenAudio].loops)
+				#print(self.activeSoundMatrix[chosenAudio].loops)
 				self.activeSoundMatrix[chosenAudio].play(loops=2)
 
 				audioTime = libtime.get_time()
@@ -705,7 +706,7 @@ class ExpPresentation(Exp):
 					countAway = 0
 
 				# check if the infant has switched
-				if (curLook != response and (countAway > 3000 or countDiff > 200)) or libtime.get_time() - audioTime > self.labelTime:
+				if (curLook != response and (countAway > 15 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
 					countLeft = 0
 					countRight = 0
 					countDiff = 0
