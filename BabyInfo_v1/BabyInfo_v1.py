@@ -212,8 +212,13 @@ class ExpPresentation(Exp):
 					'stimright': (256, -181)
 					}
 
-		# Active sampling timing stuff
-		self.timeoutTime = 2000000
+		# Contingent Timing Settings
+		self.startDisplay = 1000  # (ms) time for images in full color before contingent phase starts
+		self.firstTriggerThreshold = 300  # (ms) time to accumulate looks before triggering image
+		self.awayThreshold = 300  # (ms) time of NA/away looks for contingent ends - should account for blinks. Lower is more sensitive, higher is more forgiving.
+		self.noneThreshold = 500  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
+
+		self.timeoutTime = 30 * 10000  # (ms) 30s, length of trial
 		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 160), size = (355, 450))
 		self.aoiRight = aoi.AOI('rectangle', pos= (668, 160), size=(355, 450))
 		self.ISI = 1000
@@ -223,9 +228,9 @@ class ExpPresentation(Exp):
 		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
 		self.sampleThreshold = 20
 		self.lookAwayPos = (-1,-1)
-		self.labelTime = 10000 # forever for debugging purposes
+		self.maxLabelTime = 15000 # (ms) Maximum length of time each image can be sampled before the screen resets.
 
-		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)ra and dasha
+		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)
 
 		# INITIAL SCREEN #
 		self.initialScreen = libscreen.Screen()
@@ -236,6 +241,7 @@ class ExpPresentation(Exp):
 
 
 		print("Files Loaded!")
+
 	# Active Sampling Test Screen #
 
 	def presentScreen(self, screen):
@@ -454,6 +460,7 @@ class ExpPresentation(Exp):
 		with open(filename, "w", newline='') as file:
 			writer = csv.writer(file)
 			writer.writerow(csv_header)
+		# Contingent Timing Vars
 
 		# Set up screens
 		# Active Screen(s) #
@@ -549,15 +556,14 @@ class ExpPresentation(Exp):
 				logData += " " + field + " " + str(curTrial[field])
 			self.experiment.tracker.log(logData)
 
-		trialTimerStart = libtime.get_time()
-
 		setAndPresentScreen(self.experiment.disp, self.activeColorScreen)
 
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# log event
 			self.experiment.tracker.log("startScreen")
+
 		# pause for non-contingent color display
-		libtime.pause(1000)
+		libtime.pause(self.startDisplay)
 
 		#start contingent
 		setAndPresentScreen(self.experiment.disp, self.activeGrayScreen)
@@ -574,8 +580,12 @@ class ExpPresentation(Exp):
 				writer.writerow(log_file_list)
 
 		#### Contingent Start #
-		t0 = libtime.get_time()
+		trialTimerStart = libtime.get_time()
 		selectionNum = 0
+		t0Left = None
+		t0Right = None
+		t0None = None
+		t0Away = None
 		countLeft = 0
 		countRight = 0
 		countDiff = 0
@@ -599,7 +609,8 @@ class ExpPresentation(Exp):
 		audioStopTime_list = []
 		eventStartTime_list = []
 
-		while libtime.get_time() - t0 < self.timeoutTime:
+		# Count up to the
+		while libtime.get_time() - trialTimerStart < self.timeoutTime:
 
 			if self.experiment.subjVariables['activeMode'] == 'gaze':
 				# get gaze position
@@ -608,45 +619,52 @@ class ExpPresentation(Exp):
 				sampledGazePos = self.experiment.tracker.sample()
 
 				# add cur gaze position to the list
-				lastms.append(sampledGazePos)
+				# lastms.append(sampledGazePos)
+				#
+				# # if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
+				# # Edit: Changing this to 300 instead to give more smoothing breathing room
+				#
+				# if len(lastms) > 10:
+				# 	del (lastms[0])
+				#
+				# # Now, remove the (no looking data) tuples
+				# lastmsClean = [e for e in lastms if e != self.lookAwayPos]
+				#
+				# # Now calculate the mean
+				# if len(lastmsClean) > 0:
+				# 	# calculate mean
+				# 	gazepos = tuple(
+				# 		map(lambda y: sum(y) / float(len(y)), zip(*lastmsClean)))
+				# else:
+				# 	gazepos = self.lookAwayPos
 
-				# if the length of the list exceeds 150 ms/16.6667==9, then delete the earliest item in the list:
-				# Edit: Changing this to 300 instead to give more smoothing breathing room
-
-				if len(lastms) > 10: #for debugging purposes...
-					del (lastms[0])
-
-				# Now, remove the (no looking data) tuples
-				lastmsClean = [e for e in lastms if e != self.lookAwayPos]
-
-				# Now calculate the mean
-				if len(lastmsClean) > 0:
-					# calculate mean
-					gazepos = tuple(
-						map(lambda y: sum(y) / float(len(y)), zip(*lastmsClean)))
-				else:
-					gazepos = self.lookAwayPos
-
-			if self.aoiLeft.contains(gazepos):
-				countLeft += 1
+			if self.aoiLeft.contains(sampledGazePos):
+				if t0Left == None:
+					t0Left = libtime.get_time()
 				curLook = "left"
-			elif self.aoiRight.contains(gazepos):
-				countRight += 1
+			elif self.aoiRight.contains(sampledGazePos):
+				#countRight += 1
+				if t0Right == None:
+					t0Right = libtime.get_time()
 				curLook = "right"
-			elif gazepos == self.lookAwayPos:
+			elif sampledGazePos == self.lookAwayPos:
+				if t0Away == None:
+					t0Away = libtime.get_time()
 				curLook = "away"
 			else:
+				if t0None == None:
+					t0None = libtime.get_time()
 				curLook = "none"
-			#print(curLook)
 
 			# If an event has already been triggered, it can not be the first trigger
 			if eventTriggered == 1:
 				firstTrigger = 0
 
-			# If an event is not currently triggered, start an event and record selection
+			# If an event is not currently triggered...
 			elif eventTriggered == 0:
 
-				if countLeft > self.sampleThreshold:
+				if (t0Left is not None) and libtime.get_time() - t0Left >= self.firstTriggerThreshold:
+
 					selectionNum += 1
 					eventTriggered = 1
 					if firstTrigger == 0:
@@ -654,26 +672,24 @@ class ExpPresentation(Exp):
 
 					eventTriggerTime = libtime.get_time()
 					eventStartTime_list.append(eventTriggerTime)
-					rt = eventTriggerTime - t0
+					rt = eventTriggerTime - trialTimerStart
 					rt_list.append(rt)
+					selectionTime = libtime.get_time()
+					response = "left"
+					response_list.append(response)
 
 					# log event
 					if self.experiment.subjVariables['eyetracker'] == 'yes':
 						self.experiment.tracker.log("selection" + str(selectionNum) + "    " + curLook)
 						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook,
-										 sampledGazePos, gazepos,
+										 sampledGazePos, sampledGazePos,
 										 curLook, response]
 
 						with open(filename, 'a', newline='') as file:
 							writer = csv.writer(file)
 							writer.writerow(log_file_list)
-					selectionTime = libtime.get_time()
-					gazeCon = True
-					contingent = True
-					response = "left"
-					response_list.append(response)
 
-				elif countRight > self.sampleThreshold:
+				elif (t0Right is not None) and libtime.get_time() - t0Right >= self.firstTriggerThreshold:
 					selectionNum += 1
 					eventTriggered = 1
 					if firstTrigger == 0:
@@ -681,13 +697,13 @@ class ExpPresentation(Exp):
 
 					eventTriggerTime = libtime.get_time()
 					eventStartTime_list.append(eventTriggerTime)
-					rt = eventTriggerTime - t0
+					rt = eventTriggerTime - trialTimerStart
 					rt_list.append(rt)
 
 					# log event
 					if self.experiment.subjVariables['eyetracker'] == 'yes':
 						self.experiment.tracker.log("selection" + str(selectionNum) + "    " + curLook)
-						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook, sampledGazePos, gazepos,
+						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook, sampledGazePos, sampledGazePos,
 										 curLook, response]
 
 						with open(filename, 'a', newline='') as file:
@@ -713,14 +729,14 @@ class ExpPresentation(Exp):
 
 				self.activeSoundMatrix[chosenAudio].setLoops(-1)
 				#print(self.activeSoundMatrix[chosenAudio].loops)
-				self.activeSoundMatrix[chosenAudio].play(loops=2)
+				self.activeSoundMatrix[chosenAudio].play(loops=3)
 
 				audioTime = libtime.get_time()
 				audioStartTime_list.append(audioTime)
 				if self.experiment.subjVariables['eyetracker'] == "yes":
 					# log audio event
 					self.experiment.tracker.log("audio" + str(selectionNum))
-					log_file_list = [libtime.get_time(), "audio" + str(selectionNum), sampledGazePos, gazepos,
+					log_file_list = [libtime.get_time(), "audio" + str(selectionNum), sampledGazePos, sampledGazePos,
 									 curLook, response]
 
 					with open(filename, 'a', newline='') as file:
@@ -734,23 +750,39 @@ class ExpPresentation(Exp):
 				# 2. image to none for a short time (away but on screen)
 				# 2. the max sample has been reached
 				if curLook == "away" and (response == "left" or response == "right"):
-					countAway +=1
-					countDiff = 0
+
+					# If there hasn't been an away look already, log one
+					if t0Away == None:
+						t0Away = libtime.get_time()
+
+				# If the eyetracker refinds, reset to none?
 				elif curLook == response:
-					countAway = 0
-					countDiff = 0
+					t0Away = None
+					t0None = None
 				elif curLook == "none" and (response == "left" or response == "right"):
-					countDiff += 1
-					countAway = 0
+					if t0None == None:
+						t0None = libtime.get_time()
+
+				# Build threshold booleans outside if statement for clarity
+
+				if t0Away != None:
+					if libtime.get_time() - t0Away >= self.awayThreshold:
+						triggerEnd = True
+					else:
+						triggerEnd = False
+				elif t0None != None:
+					if libtime.get_time() - t0None >= self.awayThreshold:
+						triggerEnd = True
+					else:
+						triggerEnd = False
 
 				# check if the infant has switched
-				if (curLook != response and (countAway > 15 or countDiff > 10)) or libtime.get_time() - audioTime > self.labelTime:
-					countLeft = 0
-					countRight = 0
-					countDiff = 0
-					countAway = 0
-					gazeCon = False
-					contingent = False
+				if (curLook != response and triggerEnd) or libtime.get_time() - audioTime > self.maxLabelTime:
+					t0None = None
+					t0Away = None
+					t0Right = None
+					t0Left = None
+
 					eventTriggered = 0
 					firstTrigger = 0
 					# stop sound
@@ -765,13 +797,13 @@ class ExpPresentation(Exp):
 						# log audio event end
 						self.experiment.tracker.log(
 							"audioEnd" + str(selectionNum))
-						log_file_list = [libtime.get_time(), "audioEnd" + str(selectionNum), sampledGazePos, gazepos, curLook, response]
+						log_file_list = [libtime.get_time(), "audioEnd" + str(selectionNum), sampledGazePos, sampledGazePos, curLook, response]
 
 						with open(filename, 'a', newline='') as file:
 							writer = csv.writer(file)
 							writer.writerow(log_file_list)
 
-			log_file_list = [libtime.get_time(), None, sampledGazePos, gazepos, curLook, response]
+			log_file_list = [libtime.get_time(), None, sampledGazePos, sampledGazePos, curLook, response]
 
 			with open(filename, 'a', newline='') as file:
 				writer = csv.writer(file)
