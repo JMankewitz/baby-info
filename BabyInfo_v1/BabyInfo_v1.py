@@ -218,7 +218,7 @@ class ExpPresentation(Exp):
 		self.awayThreshold = 300  # (ms) time of NA/away looks for contingent ends - should account for blinks. Lower is more sensitive, higher is more forgiving.
 		self.noneThreshold = 500  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
 
-		self.timeoutTime = 30 * 10000  # (ms) 30s, length of trial
+		self.timeoutTime = 20 * 1000  # (ms) 30s, length of trial
 		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 160), size = (355, 450))
 		self.aoiRight = aoi.AOI('rectangle', pos= (668, 160), size=(355, 450))
 		self.ISI = 1000
@@ -228,7 +228,7 @@ class ExpPresentation(Exp):
 		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
 		self.sampleThreshold = 20
 		self.lookAwayPos = (-1,-1)
-		self.maxLabelTime = 15000 # (ms) Maximum length of time each image can be sampled before the screen resets.
+		self.maxLabelTime = 10000 # (ms) Maximum length of time each image can be sampled before the screen resets.
 
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)
 
@@ -656,6 +656,8 @@ class ExpPresentation(Exp):
 					t0None = libtime.get_time()
 				curLook = "none"
 
+			print(curLook)
+
 			# If an event has already been triggered, it can not be the first trigger
 			if eventTriggered == 1:
 				firstTrigger = 0
@@ -768,11 +770,13 @@ class ExpPresentation(Exp):
 				if t0Away != None:
 					if libtime.get_time() - t0Away >= self.awayThreshold:
 						triggerEnd = True
+						print("End Away:", libtime.get_time() - t0Away)
 					else:
 						triggerEnd = False
 				elif t0None != None:
-					if libtime.get_time() - t0None >= self.awayThreshold:
+					if libtime.get_time() - t0None >= self.noneThreshold:
 						triggerEnd = True
+						print("End None:", libtime.get_time() - t0None)
 					else:
 						triggerEnd = False
 
