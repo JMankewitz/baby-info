@@ -208,8 +208,8 @@ class ExpPresentation(Exp):
 					'center': (0, 0),
 					'sampleStimLeft': (-322, -116),
 					'sampleStimRight': (322, -116),
-					'stimleft': (-256, -181),
-					'stimright': (256, -181)
+					'stimleft': (-self.x_length/4, -350),
+					'stimright': (self.x_length/4, -350)
 					}
 
 		# Contingent Timing Settings
@@ -338,7 +338,7 @@ class ExpPresentation(Exp):
 			# mov = visual.MovieStim3(self.experiment.win, self.experiment.moviePath+curTrial['AGVideo'] )
 			mov = self.AGmovieMatrix[curTrial['AGVideo']]
 			#mov.loadMovie(self.experiment.moviePath + curTrial['AGVideo'] + self.movieExt)
-			mov.size = (1024, 560)
+			mov.size = (self.x_length, self.y_length)
 
 			if curTrial['AGAudio'] != "none":
 				playAndWait(self.AGsoundMatrix[curTrial['AGAudio']], waitFor=0)
@@ -393,9 +393,9 @@ class ExpPresentation(Exp):
 		right_image.pos = self.pos['stimright']
 
 		# set image sizes
-		left_image.size = (200, 200)
-		right_image.size = (200, 200)
-		mov.size = (1024, 560)
+		left_image.size = (300, 300)
+		right_image.size = (300, 300)
+		mov.size = (self.x_length, self.y_length)
 
 		#load sound until window flip for latency
 
@@ -466,6 +466,10 @@ class ExpPresentation(Exp):
 		# Active Screen(s) #
 		# Picture Names (should match name in left/right image column
 		# Left speaker
+
+		speakerImageSize = (280, 400)
+		novelImageSize = (150, 130)
+
 		leftSpeakerImageGrayName = curTrial['leftImage'] + '_grayscale'
 		leftSpeakerImageColorName =curTrial['leftImage'] + '_color'
 		# Right speaker
@@ -476,19 +480,19 @@ class ExpPresentation(Exp):
 		# Left
 		self.leftSpeakerGrayImage = self.imageMatrix[leftSpeakerImageGrayName][0]
 		self.leftSpeakerGrayImage.setPos(self.pos['centerLeft'])
-		self.leftSpeakerGrayImage.size = (280, 400)
+		self.leftSpeakerGrayImage.size = speakerImageSize
 
 		self.leftSpeakerColorImage = self.imageMatrix[leftSpeakerImageColorName][0]
 		self.leftSpeakerColorImage.setPos(self.pos['centerLeft'])
-		self.leftSpeakerColorImage.size = (280, 400)
+		self.leftSpeakerColorImage.size = speakerImageSize
 		# Right
 		self.rightSpeakerGrayImage = self.imageMatrix[rightSpeakerImageGrayName][0]
 		self.rightSpeakerGrayImage.setPos(self.pos['centerRight'])
-		self.rightSpeakerGrayImage.size = (280, 400)
+		self.rightSpeakerGrayImage.size = speakerImageSize
 
 		self.rightSpeakerColorImage = self.imageMatrix[rightSpeakerImageColorName][0]
 		self.rightSpeakerColorImage.setPos(self.pos['centerRight'])
-		self.rightSpeakerColorImage.size = (280, 400)
+		self.rightSpeakerColorImage.size = speakerImageSize
 
 
 		# Initialize Screens
@@ -517,20 +521,20 @@ class ExpPresentation(Exp):
 			# Left
 			self.leftNovelGrayImage = self.imageMatrix[leftNovelImageGrayName][0]
 			self.leftNovelGrayImage.setPos(self.pos['sampleStimLeft'])
-			self.leftNovelGrayImage.size = (150, 130)
+			self.leftNovelGrayImage.size = novelImageSize
 
 			self.leftNovelColorImage = self.imageMatrix[leftNovelImageColorName][0]
 			self.leftNovelColorImage.setPos(self.pos['sampleStimLeft'])
-			self.leftNovelColorImage.size = (150, 130)
+			self.leftNovelColorImage.size = novelImageSize
 
 			# Right
 			self.rightNovelGrayImage = self.imageMatrix[rightNovelImageGrayName][0]
 			self.rightNovelGrayImage.setPos(self.pos['sampleStimRight'])
-			self.rightNovelGrayImage.size = (150, 130)
+			self.rightNovelGrayImage.size = novelImageSize
 
 			self.rightNovelColorImage = self.imageMatrix[rightNovelImageColorName][0]
 			self.rightNovelColorImage.setPos(self.pos['sampleStimRight'])
-			self.rightNovelColorImage.size = (150, 130)
+			self.rightNovelColorImage.size = novelImageSize
 
 			self.activeGrayScreen.screen.append(self.rightNovelGrayImage)
 			self.activeGrayScreen.screen.append(self.leftNovelGrayImage)
@@ -925,6 +929,6 @@ currentPresentation = ExpPresentation(currentExp)
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
-#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
