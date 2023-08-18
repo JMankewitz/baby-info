@@ -202,12 +202,12 @@ class ExpPresentation(Exp):
 		print(self.x_length, self.y_length)
 
 		self.pos = {'bottomLeft': (-256, 0), 'bottomRight': (256, 0),
-					'centerLeft': (-322, 0), 'centerRight': (322, 0),
+					'centerLeft': (-480, 0), 'centerRight': (480, 0),
 					'topLeft': (-self.x_length/4, self.y_length/4),
 					'topRight': (self.x_length/4, self.y_length/4),
 					'center': (0, 0),
-					'sampleStimLeft': (-322, -116),
-					'sampleStimRight': (322, -116),
+					'sampleStimLeft': (-480, -116),
+					'sampleStimRight': (480, -116),
 					'stimleft': (-self.x_length/4, -350),
 					'stimright': (self.x_length/4, -350)
 					}
@@ -219,8 +219,8 @@ class ExpPresentation(Exp):
 		self.noneThreshold = 500  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
 
 		self.timeoutTime = 20 * 1000  # (ms) 30s, length of trial
-		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 160), size = (355, 450))
-		self.aoiRight = aoi.AOI('rectangle', pos= (668, 160), size=(355, 450))
+		self.aoiLeft = aoi.AOI('rectangle', pos = (340, 300), size = (355, 450))
+		self.aoiRight = aoi.AOI('rectangle', pos= (1300, 300), size=(355, 450))
 		self.ISI = 1000
 		self.startSilence = 0
 		self.endSilence = 1000
