@@ -202,31 +202,30 @@ class ExpPresentation(Exp):
 		print(self.x_length, self.y_length)
 
 		self.pos = {'bottomLeft': (-256, 0), 'bottomRight': (256, 0),
-					'centerLeft': (-480, 0), 'centerRight': (480, 0),
+					'centerLeft': (-600, 0), 'centerRight': (600, 0),
 					'topLeft': (-self.x_length/4, self.y_length/4),
 					'topRight': (self.x_length/4, self.y_length/4),
 					'center': (0, 0),
-					'sampleStimLeft': (-480, -116),
-					'sampleStimRight': (480, -116),
+					'sampleStimLeft': (-600, -150),
+					'sampleStimRight': (600, -150),
 					'stimleft': (-self.x_length/4, -350),
 					'stimright': (self.x_length/4, -350)
 					}
 
 		# Contingent Timing Settings
 		self.startDisplay = 1000  # (ms) time for images in full color before contingent phase starts
-		self.firstTriggerThreshold = 300  # (ms) time to accumulate looks before triggering image
+		self.firstTriggerThreshold = 250  # (ms) time to accumulate looks before triggering image
 		self.awayThreshold = 300  # (ms) time of NA/away looks for contingent ends - should account for blinks. Lower is more sensitive, higher is more forgiving.
-		self.noneThreshold = 500  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
+		self.noneThreshold = 250  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
 
-		self.timeoutTime = 20 * 1000  # (ms) 30s, length of trial
-		self.aoiLeft = aoi.AOI('rectangle', pos = (340, 300), size = (355, 450))
-		self.aoiRight = aoi.AOI('rectangle', pos= (1300, 300), size=(355, 450))
+		self.timeoutTime = 30 * 1000  # (ms) 30s, length of trial
+		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 190), size = (620, 700))
+		self.aoiRight = aoi.AOI('rectangle', pos= (1300, 190), size=(620, 700))
 		self.ISI = 1000
 		self.startSilence = 0
 		self.endSilence = 1000
 
 		# sampling threshold - when the gaze will trigger (20 samples = 333.333 ms)
-		self.sampleThreshold = 20
 		self.lookAwayPos = (-1,-1)
 		self.maxLabelTime = 10000 # (ms) Maximum length of time each image can be sampled before the screen resets.
 
@@ -467,8 +466,8 @@ class ExpPresentation(Exp):
 		# Picture Names (should match name in left/right image column
 		# Left speaker
 
-		speakerImageSize = (280, 400)
-		novelImageSize = (150, 130)
+		speakerImageSize = (420, 600)
+		novelImageSize = (200, 200)
 
 		leftSpeakerImageGrayName = curTrial['leftImage'] + '_grayscale'
 		leftSpeakerImageColorName =curTrial['leftImage'] + '_color'
@@ -621,7 +620,7 @@ class ExpPresentation(Exp):
 				####smoothing eyetracking sample###
 				# get current sampled gaze position
 				sampledGazePos = self.experiment.tracker.sample()
-
+				print(sampledGazePos)
 				# add cur gaze position to the list
 				# lastms.append(sampledGazePos)
 				#
@@ -929,6 +928,6 @@ currentPresentation = ExpPresentation(currentExp)
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
 currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
-currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
 currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
