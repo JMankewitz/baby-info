@@ -422,6 +422,9 @@ class ExpPresentation(Exp):
 
 		if mov.status == visual.FINISHED:
 			mov.pause()
+			mov.stop()
+			mov.reset()
+			curSound.stop()
 
 		libtime.pause(self.endSilence)
 
@@ -927,7 +930,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
-#currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-currentPresentation.cycleThroughTrials(whichPart = "activeTest")
+#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
+#currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
