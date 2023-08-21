@@ -340,7 +340,8 @@ class ExpPresentation(Exp):
 			mov.size = (self.x_length, self.y_length)
 
 			if curTrial['AGAudio'] != "none":
-				playAndWait(self.AGsoundMatrix[curTrial['AGAudio']], waitFor=0)
+				curSound = self.AGsoundMatrix[curTrial['AGAudio']]
+				playAndWait(curSound, waitFor=0)
 				if self.experiment.subjVariables['eyetracker'] == "yes":
 					# log event
 					self.experiment.tracker.log("presentAGAudio")
@@ -352,6 +353,13 @@ class ExpPresentation(Exp):
 			while mov.status != visual.FINISHED:
 				mov.draw()
 				self.experiment.win.flip()
+
+
+			if mov.status == visual.FINISHED:
+				mov.stop()
+				mov.reset()
+				curSound.stop()
+
 
 		# if getInput=True, wait for keyboard press before advancing
 		if getInput == "yes":
@@ -930,7 +938,7 @@ currentPresentation = ExpPresentation(currentExp)
 
 currentPresentation.initializeExperiment()
 currentPresentation.presentScreen(currentPresentation.initialScreen)
-#currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
+currentPresentation.cycleThroughTrials(whichPart = "activeTraining")
 currentPresentation.cycleThroughTrials(whichPart = "familiarizationPhase")
-#currentPresentation.cycleThroughTrials(whichPart = "activeTest")
+currentPresentation.cycleThroughTrials(whichPart = "activeTest")
 currentPresentation.EndDisp()
