@@ -44,7 +44,8 @@ Friday: gaze contingent trials
 Bonus: fade in and out
 
 
-Dolphin screen size: (1024,768)
+Old Dolphin screen size: (1024,768)
+new dolphin screen size: (1920, 1080)
 Size of images: (452, 646)
 
 
