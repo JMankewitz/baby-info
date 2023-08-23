@@ -218,7 +218,7 @@ class ExpPresentation(Exp):
 		self.awayThreshold = 300  # (ms) time of NA/away looks for contingent ends - should account for blinks. Lower is more sensitive, higher is more forgiving.
 		self.noneThreshold = 250  # (ms) time of look to on-screen but non-trigger AOI before contingent ends - should account for shifts
 
-		self.timeoutTime = 30 * 1000  # (ms) 30s, length of trial
+		self.timeoutTime = 20 * 1000  # (ms) 30s, length of trial
 		self.aoiLeft = aoi.AOI('rectangle', pos = (0, 190), size = (620, 700))
 		self.aoiRight = aoi.AOI('rectangle', pos= (1300, 190), size=(620, 700))
 		self.ISI = 1000
