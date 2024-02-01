@@ -39,7 +39,6 @@ fill_gap <- function(trial, gap,AOIs) {
 
 # For each trial
 
-
 # Tidyverse this
 InterpolateMissingAOI = function(trial) {
   trial$LookAOI[trial$LookAOI=='off']=NA
@@ -82,9 +81,9 @@ InterpolateMissingAOI = function(trial) {
   is_fillable <- function(gap) AOIs[gap$start] == AOIs[gap$end] # start and end of gap are same AOI
   is_same_trial <- function(gap) trialnums[gap$start] == trialnums[gap$end] # within the same trial
   gaps <- Filter(has_legal_length, gaps)
-  #gaps <- Filter(is_not_first_frame, gaps)
-  #gaps <- Filter(is_fillable, gaps)
-  #gaps <- Filter(is_same_trial,gaps)
+  gaps <- Filter(is_not_first_frame, gaps)
+  gaps <- Filter(is_fillable, gaps)
+  gaps <- Filter(is_same_trial,gaps)
   # Fill each gap
   for (gap in gaps) {
     trial <- fill_gap(trial, gap,AOIs)
