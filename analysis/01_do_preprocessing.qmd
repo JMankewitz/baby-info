@@ -1,4 +1,5 @@
 ---
+here()---
 title: "01_do_preprocessing"
 format: html
 editor: visual
@@ -30,7 +31,7 @@ library(tidyverse)
 source("01_preprocessGazeData.R")
 source("Pygaze_InterpolateAOIHits.R")
 
-eyetracking_data_path <- here("BabyInfo_v1/eyetrackingData")
+eyetracking_data_path <- "/Users/jessicamankewitz/projects/baby-info/BabyInfo_v1/eyetrackingData"
 trials_path <- here('BabyInfo_v1/data')
 ```
 
@@ -51,14 +52,13 @@ Then separates the Event column into trial/participant columns.
 fullGazeDataNames <- list.files(path = eyetracking_data_path, pattern = ".tsv",
                       full.names = TRUE, recursive = TRUE)
 
-# exclude data from the delete folder
-gazeDataNames <- fullGazeDataNames[!grepl("delete", fullGazeDataNames)]
-gazeDataNames <- gazeDataNames[!grepl("adult_testing", gazeDataNames)]
+gazeDataNames_pilot <- fullGazeDataNames[grepl("pilot_2", fullGazeDataNames)]
 
-# Alternatively, only include from specific folder
-#gazeDataNames <- fullGazeDataNames[grepl("pilot_1", fullGazeDataNames)]
+gazeDataNames_real <- fullGazeDataNames[grepl("/v1/", fullGazeDataNames)]
 
-d_full_raw <- do.call(dplyr::bind_rows, lapply(gazeDataNames, integrateEventData))
+#gazeDataNames = append(gazeDataNames_pilot, gazeDataNames_real)
+
+d_full_raw <- do.call(dplyr::bind_rows, lapply(gazeDataNames_real, integrateEventData))
 ```
 
 ### XY Timepoint Cleaning
@@ -78,13 +78,22 @@ Once these column values are loaded, we make the following modifications:
 6.  Regularizes each TimeStamp to the nearest expected TimeBin based on 30hz/16.666ms bins
 
 ```{r, clean-xy}
+screen_x_max = 1920
+screen_y_max = 1080
+
 d_full_xy <- d_full_raw |> 
-  processGazeData(monitor_x = 1024, monitor_y = 768)
+  processGazeData(monitor_x = screen_x_max, monitor_y = screen_y_max)
+```
+
+```{r}
+d_full_xy |> 
+  ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subjCode))) +
+  geom_point(alpha = .25)
 ```
 
 ### Assign Numeric Subject IDs
 
-We're doing a lot of group_by subject and trial, so it's computationally worth storing subject IDs seperately that can be joined later
+We're doing a lot of group_by subject and trial, so it's worth storing subject IDs separately that can be joined later
 
 ```{r}
 d_subjects <- d_full_xy |> 
@@ -104,21 +113,14 @@ I have to assign AOIs differently for each phase because they have different AOI
 ```{r}
 d_active_train_gaze <- d_full_xy |> 
   filter(trialType == "activeTraining") |> 
-  #TODO: subject 10 doesn't have this recorded in the output which is annoying because their gaze is great. For now, just fill those NAs 
-  fill(c(leftImage, rightImage, leftAudio, rightAudio, trialType, trialID)) |> 
   janitor::remove_empty("cols")
   
 d_training_gaze <- d_full_xy |> 
-  filter(trialType == "training" & trial_number != 1) |> 
+  filter(trialType == "training") |> 
   janitor::remove_empty("cols")
 
 d_active_test_gaze <- d_full_xy |> 
-  filter(trialType == "sampleTest" | trialType == "activeTest") |> 
-  #TODO: subject 10 doesn't have this recorded in the output which is annoying because their gaze is great. For now, just fill those NAs 
-  #TODO: I CANNOT keep this once I adjust orders!!!
-  fill(c(leftImage, rightImage, leftAudio, rightAudio, 
-         novelImage, leftLabel, rightLabel, trialType, trialID)) |> 
-  mutate(trialType = "activeTest") |> 
+  filter(trialType == "activeTest") |> 
   janitor::remove_empty("cols")
 ```
 
@@ -136,14 +138,13 @@ trial_type_id    leftImage rightImage  leftAudio rightAudio trialType trialID
 
 ```{r}
 d_active_train_trials <- d_active_train_gaze |> 
-  select(leftImage, rightImage, leftAudio, rightAudio, trialType, trial_number) |> 
-  #TODO: subject 10 doesn't have this recorded in the output which is annoying because their gaze is great. For now, just fill those NAs 
+  select(leftImage, rightImage, leftAudio, rightAudio, trialType, trialOrder, trial_number) |> 
   unique() |> 
   mutate(trial_type_id = seq(1:n()))
 
 d_active_train_gaze <- d_active_train_gaze |> 
   left_join(d_active_train_trials) |> 
-  select(-c(trial_number:trialOrder))
+  select(-c(trial_number:AG))
 ```
 
 ##### Active test
@@ -156,29 +157,15 @@ trialtype_id  leftImage rightImage  leftAudio rightAudio  novelImage  leftLabel 
 
 ```{r}
 d_active_test_trials <- d_active_test_gaze |> 
-  select(leftImage, rightImage, leftAudio, rightAudio, 
-         novelImage, leftLabel, rightLabel, trialType, subject_id) |> 
-  unique()
-
-#TODO: I FORGOT TO ADD THE EXP RELIABILITY IN THE TRIAL ORDERS!!!
-# Recover this from the other trial types by participant like a FOOL:
-# This isn't a big deal now because I'm all running one order but its very annoying lol
-d_active_test_trials <- d_active_test_trials |> 
-  left_join(d_training_gaze |> 
-  select(leftImage=speakerExp, 
-         leftSpeakerType = speakerType, subject_id) |> 
-    unique()) |> 
-    left_join(d_training_gaze |> 
-  select(rightImage=speakerExp, 
-         rightSpeakerType = speakerType, subject_id) |> 
-    unique()) |> 
-    select(-subject_id) |> unique() |> 
+  select(leftImage, rightImage, leftAudio, rightAudio, leftSpeakerType, rightSpeakerType,
+         novelImage, leftLabel, rightLabel, trialType, trialOrder, trialID, blockID) |> 
+  unique() |> 
   mutate(trial_type_id = seq(1:n()))
 
 d_active_test_gaze <- 
   d_active_test_gaze |> 
   left_join(d_active_test_trials) |> 
-  select(-c(trialID:trialOrder, leftSpeakerType, rightSpeakerType))
+  select(-c(trial_number:rightLabel))
 ```
 
 ##### Passive Training
@@ -191,7 +178,7 @@ trial_type_id  speakerPos  leftImage rightImage  speakerType speakerExp  label v
 
 ```{r}
 d_passive_training_trials <- d_training_gaze |> 
-  select(speakerPos, leftImage, rightImage, speakerType, speakerExp, label, video) |> 
+  select(speakerPos, leftImage, rightImage, speakerType, speakerExp, targetPos, label, video, trialOrder, trialType, trialID, blockID) |> 
   unique() |> 
   # Distinguish left and right speakers/types
   mutate(leftExp = case_when(speakerPos == "left" ~ speakerExp,
@@ -208,17 +195,15 @@ d_passive_training_trials <- d_training_gaze |>
                              speakerPos == "left" & speakerType == "reliable" ~ "unreliable")) |> 
   separate(label, c("carrier", "target_label"), remove=F) |> 
   # Determine target vs distractor objects
-  mutate(random_side = sample(c("left", "right"), n(), replace = TRUE),
-         targetSide = case_when(speakerType == "reliable" & target_label == leftImage ~ "left",
-                            speakerType == "reliable" & target_label == rightImage ~ "right",
-                            speakerType == "unreliable" ~ random_side),
+  mutate(random_side = rep(c("left", "right"), n()/2),
+         targetSide = ifelse(targetPos == "none", random_side, targetPos),
          distractorSide = ifelse(targetSide=="left", "right", "left")) |> 
   select(-random_side) |> 
     mutate(trial_type_id = seq(1:n()))
 
 d_training_gaze <- d_training_gaze |> 
   left_join(d_passive_training_trials) |> 
-  select(-c(trialID:trialOrder, carrier:distractorSide))
+  select(-c(trial_number:video, carrier:distractorSide))
 ```
 
 ### Assign AOIs
@@ -228,18 +213,15 @@ d_training_gaze <- d_training_gaze |>
 ##### Passive Training AOIs
 
 ```{r}
-screen_x_max = 1024
-screen_y_max = 768
+obj_area_width = c(-150, 150)
+obj_area_height = c(-150, 150)
+left_obj_coords = c(480, 190)
+right_obj_coords = c(1440, 190)
 
-obj_area_width = c(-100, 100)
-obj_area_height = c(-100, 100)
-left_obj_coords = c(256, 203)
-right_obj_coords = c(768, 203)
-
-face_area_width = c(-100, 100)
-face_area_height = c(-150, 150)
-left_face_coords = c(256, 500)
-right_face_coords = c(768, 500)
+face_area_width = c(-250, 250)
+face_area_height = c(-250, 250)
+left_face_coords = c(480, 740)
+right_face_coords = c(1440, 740)
 
 left_obj_aoi = list(left_obj_coords[[1]] + obj_area_width, 
                     left_obj_coords[[2]] + obj_area_height)
@@ -254,23 +236,23 @@ right_face_aoi = list(right_face_coords[[1]] + face_area_width,
 
 Quick plot to check AOI reasonablility:
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 d_training_gaze |> 
   ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
-  geom_point(alpha = .025) + 
-  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
-            color = "black", fill = NA) +
-  geom_rect(aes(xmin=left_obj_aoi[[1]][[1]], xmax=left_obj_aoi[[1]][[2]], 
-                ymin=left_obj_aoi[[2]][[1]], ymax=left_obj_aoi[[2]][[2]]), 
+  geom_point(alpha = .05) +
+annotate("rect", xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max, 
+                   fill=NA, color="black", size=0.5) +
+  annotate("rect", xmin=left_obj_aoi[[1]][[1]], xmax=left_obj_aoi[[1]][[2]], 
+                ymin=left_obj_aoi[[2]][[1]], ymax=left_obj_aoi[[2]][[2]], 
+            color = "black", size = .5, fill = NA) +
+  annotate("rect", xmin=right_obj_aoi[[1]][[1]], xmax=right_obj_aoi[[1]][[2]], 
+                ymin=right_obj_aoi[[2]][[1]], ymax=right_obj_aoi[[2]][[2]], 
+            color = "black",fill=NA) +
+  annotate("rect", xmin=left_face_aoi[[1]][[1]], xmax=left_face_aoi[[1]][[2]], 
+                ymin=left_face_aoi[[2]][[1]], ymax=left_face_aoi[[2]][[2]],
             color = "black", fill=NA) +
-  geom_rect(aes(xmin=right_obj_aoi[[1]][[1]], xmax=right_obj_aoi[[1]][[2]], 
-                ymin=right_obj_aoi[[2]][[1]], ymax=right_obj_aoi[[2]][[2]]), 
-            color = "black",fill=NA)+
-  geom_rect(aes(xmin=left_face_aoi[[1]][[1]], xmax=left_face_aoi[[1]][[2]], 
-                ymin=left_face_aoi[[2]][[1]], ymax=left_face_aoi[[2]][[2]]),
-            color = "black", fill=NA) +
-  geom_rect(aes(xmin=right_face_aoi[[1]][[1]], xmax=right_face_aoi[[1]][[2]], 
-                ymin=right_face_aoi[[2]][[1]], ymax=right_face_aoi[[2]][[2]]),
+  annotate("rect", xmin=right_face_aoi[[1]][[1]], xmax=right_face_aoi[[1]][[2]], 
+                ymin=right_face_aoi[[2]][[1]], ymax=right_face_aoi[[2]][[2]],
             color = "black", fill=NA) +
   theme_classic() + 
   guides(color = guide_legend(override.aes = list(alpha = 1)))
@@ -298,10 +280,10 @@ table(d_training_aoi$LookAOI)
 ##### Active AOIs (Test)
 
 ```{r}
-active_width = c(-140, 140)
-active_height = c(-200, 200)
-left_active_coords = c(190, 384)
-right_active_coords = c(834, 384)
+active_width = c(-210, 210)
+active_height = c(-300, 300)
+left_active_coords = c(360, 540)
+right_active_coords = c(1560, 540)
 
 left_active_face_aoi = list(left_active_coords[[1]] + active_width, 
                     left_active_coords[[2]] + active_height)
@@ -309,10 +291,10 @@ right_active_face_aoi = list(right_active_coords[[1]] + active_width,
                     right_active_coords[[2]] + active_height)
 
 # coordinates for objects if we want to see proportion to novel objects in the future
-active_novel_width = c(-75, 75)
-active_novel_height = c(-65, 65)
-left_active_novel_coords = c(190, 268)
-right_active_novel_coords = c(834, 268)
+active_novel_width = c(-100, 100)
+active_novel_height = c(-100, 100)
+left_active_novel_coords = c(360, 390)
+right_active_novel_coords = c(1560, 390)
 
 left_active_novel_aoi = list(left_active_novel_coords[[1]] + active_novel_width, 
                     left_active_novel_coords[[2]] + active_novel_height)
@@ -322,23 +304,23 @@ right_active_novel_aoi = list(right_active_novel_coords[[1]] + active_novel_widt
 
 Quick plot to check AOIs
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 d_active_test_gaze |> 
   ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
   geom_point(alpha = .025) + 
-  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
+  annotate("rect", xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max, 
             color = "black", fill = NA) +
-  geom_rect(aes(xmin=left_active_face_aoi[[1]][[1]], xmax=left_active_face_aoi[[1]][[2]], 
-                ymin=left_active_face_aoi[[2]][[1]], ymax=left_active_face_aoi[[2]][[2]]), 
+  annotate("rect", xmin=left_active_face_aoi[[1]][[1]], xmax=left_active_face_aoi[[1]][[2]], 
+                ymin=left_active_face_aoi[[2]][[1]], ymax=left_active_face_aoi[[2]][[2]], 
             color = "black", fill=NA) +
-  geom_rect(aes(xmin=right_active_face_aoi[[1]][[1]], xmax=right_active_face_aoi[[1]][[2]], 
-                ymin=right_active_face_aoi[[2]][[1]], ymax=right_active_face_aoi[[2]][[2]]), 
+  annotate("rect", xmin=right_active_face_aoi[[1]][[1]], xmax=right_active_face_aoi[[1]][[2]], 
+                ymin=right_active_face_aoi[[2]][[1]], ymax=right_active_face_aoi[[2]][[2]], 
             color = "black",fill=NA)+
-  geom_rect(aes(xmin=left_active_novel_aoi[[1]][[1]], xmax=left_active_novel_aoi[[1]][[2]], 
-                ymin=left_active_novel_aoi[[2]][[1]], ymax=left_active_novel_aoi[[2]][[2]]),
+  annotate("rect", xmin=left_active_novel_aoi[[1]][[1]], xmax=left_active_novel_aoi[[1]][[2]], 
+                ymin=left_active_novel_aoi[[2]][[1]], ymax=left_active_novel_aoi[[2]][[2]],
             color = "black", fill=NA) +
-  geom_rect(aes(xmin=right_active_novel_aoi[[1]][[1]], xmax=right_active_novel_aoi[[1]][[2]], 
-                ymin=right_active_novel_aoi[[2]][[1]], ymax=right_active_novel_aoi[[2]][[2]]),
+  annotate("rect", xmin=right_active_novel_aoi[[1]][[1]], xmax=right_active_novel_aoi[[1]][[2]], 
+                ymin=right_active_novel_aoi[[2]][[1]], ymax=right_active_novel_aoi[[2]][[2]],
             color = "black", fill=NA) +
   theme_classic() + 
   guides(color = guide_legend(override.aes = list(alpha = 1)))
@@ -363,17 +345,17 @@ table(d_active_test_aoi$LookAOI)
 
 Both active phases use the same AOIs:
 
-```{r eval=FALSE, include=FALSE}
+```{r}
 d_active_train_gaze |> 
   ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subject_id))) +
   geom_point(alpha = .025) + 
-  geom_rect(aes(xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max), 
+  annotate("rect", xmin = 0, xmax = screen_x_max, ymin = 0, ymax = screen_y_max, 
             color = "black", fill = NA) +
-  geom_rect(aes(xmin=left_active_face_aoi[[1]][[1]], xmax=left_active_face_aoi[[1]][[2]], 
-                ymin=left_active_face_aoi[[2]][[1]], ymax=left_active_face_aoi[[2]][[2]]), 
+  annotate("rect", xmin=left_active_face_aoi[[1]][[1]], xmax=left_active_face_aoi[[1]][[2]], 
+                ymin=left_active_face_aoi[[2]][[1]], ymax=left_active_face_aoi[[2]][[2]], 
             color = "black", fill=NA) +
-  geom_rect(aes(xmin=right_active_face_aoi[[1]][[1]], xmax=right_active_face_aoi[[1]][[2]], 
-                ymin=right_active_face_aoi[[2]][[1]], ymax=right_active_face_aoi[[2]][[2]]), 
+  annotate("rect", xmin=right_active_face_aoi[[1]][[1]], xmax=right_active_face_aoi[[1]][[2]], 
+                ymin=right_active_face_aoi[[2]][[1]], ymax=right_active_face_aoi[[2]][[2]], 
             color = "black",fill=NA)+
   theme_classic() + 
   guides(color = guide_legend(override.aes = list(alpha = 1)))
@@ -492,13 +474,84 @@ d_final_test_aoi <-
   left_join(d_active_test_trials)
 ```
 
+## Final Data Label Cleaning
+
+#### Active Training Trials
+
+```         
+"subject_id"            "trial_type_id"         "TimeBin"               "TimeBinMs"             "TimeStampRezeroed"     "TimeStamp"            "normalizedTimeStamp"   "Event"                 "GazePointYMean"        "GazePointXMean"        "isLook"                "LookAOI"              "numInterpolatedPoints" "isInterpolatedFrame"   "isTracked"             "Experiment"    
+"participant_group"     "subjCode"             "leftImage"             "rightImage"            "leftAudio"             "rightAudio"            "trialType"             "trialOrder"           "trial_number"          "stimAOI"               "sideAOI"              
+```
+
+```{r}
+d_final_active_training_aoi_types <- d_final_active_training_aoi |> ungroup() |> 
+  select(LookAOI, leftImage, rightImage ) |> 
+  distinct() |> 
+  mutate(stimAOI = case_when(LookAOI == "left_scene" ~ leftImage,
+                                 LookAOI == "right_scene" ~ rightImage,
+                                 TRUE ~ LookAOI),
+         sideAOI = LookAOI)
+
+d_final_active_training_aoi_clean <- d_final_active_training_aoi |> 
+  left_join(d_final_active_training_aoi_types)
+```
+
+### Active Test Trials
+
+```{r}
+d_final_test_aoi_types <- d_final_test_aoi |> ungroup() |> 
+  select(LookAOI, leftImage, rightImage, leftSpeakerType, rightSpeakerType) |> 
+  distinct() |> 
+  mutate(stimAOI = case_when(LookAOI == "other" ~ "other",
+                             LookAOI == "left_speaker" ~ leftImage,
+                             LookAOI == "right_speaker" ~ rightImage,
+                             TRUE ~ LookAOI),
+         condAOI = case_when(LookAOI == "other" ~ "other",
+                             LookAOI == "left_speaker" ~ leftSpeakerType,
+                             LookAOI == "right_speaker" ~ rightSpeakerType,
+                             TRUE ~ LookAOI),
+         sideAOI = LookAOI)
+
+d_final_test_aoi_clean <- d_final_test_aoi |> left_join(d_final_test_aoi_types)
+```
+
+### Training Trials
+
+```{r}
+d_final_training_aoi_type <- d_final_training_aoi |> ungroup() |> 
+  select(LookAOI, leftSpeakerType, rightSpeakerType, targetSide, leftExp, rightExp, leftImage, rightImage, speakerType) |> 
+  distinct() |> 
+  mutate(condAOI = case_when(LookAOI == "left_face" ~ leftSpeakerType,
+                                 LookAOI == "right_face" ~ rightSpeakerType,
+                                 LookAOI == "left_obj" & targetSide == "left" ~ "target",
+                                 LookAOI == "left_obj" & targetSide == "right" ~ "distractor",
+                                 LookAOI == "right_obj" & targetSide == "right" ~ "target",
+                                 LookAOI == "right_obj" & targetSide == "left" ~ "distractor",
+                                 TRUE ~ LookAOI),
+         stimAOI = case_when(LookAOI == "left_face" ~ leftExp,
+                             LookAOI == "right_face" ~ rightExp,
+                             LookAOI == "left_obj" ~ leftImage,
+                             LookAOI == "right_obj" ~ rightImage,
+                             TRUE ~ LookAOI),
+         attnAOI = case_when(condAOI == "reliable" & speakerType == "reliable" ~ "target_speaker",
+                             condAOI == "unreliable" & speakerType == "unreliable" ~ "target_speaker",
+                             condAOI == "reliable" & speakerType == "unreliable" ~ "distractor_speaker",
+                             condAOI == "unreliable" & speakerType == "reliable" ~ "distractor_speaker",
+                             condAOI == "target" ~ "target_obj",
+                             condAOI == "distractor" ~ "distractor_obj",
+                             TRUE ~ condAOI),
+         sideAOI = LookAOI)
+
+d_final_training_aoi_clean <- d_final_training_aoi |>  left_join(d_final_training_aoi_type) 
+```
+
 # Write Data
 
 ```{r}
-write_file_location <- "preprocessedGazeData/pilot_1"
+write_file_location <- "preprocessedGazeData/v1/"
 
-d_final_active_training_aoi |> write_csv(file = here("analysis", write_file_location, "active_training_aois.csv"))
-d_final_training_aoi |> write_csv(file = here("analysis", write_file_location, "training_aois.csv"))
-d_final_test_aoi |> write_csv(file = here("analysis", write_file_location, "active_test_aois.csv"))
+d_final_active_training_aoi_clean |> write_csv(file = paste0("/Users/jessicamankewitz/projects/baby-info/analysis/", write_file_location, "active_training_aois.csv"))
+d_final_training_aoi_clean |> write_csv(file = paste0("/Users/jessicamankewitz/projects/baby-info/analysis/", write_file_location, "training_aois.csv"))
+d_final_test_aoi_clean |> write_csv(file = paste0("/Users/jessicamankewitz/projects/baby-info/analysis/", write_file_location, "active_test_aois.csv"))
 
 ```

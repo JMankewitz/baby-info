@@ -1,24 +1,24 @@
-trialType	trialID	blockID	speakerType	speakerExp	speakerPos	targetPos	leftImage	rightImage	label	video	trialDuration	trialStartSilence	trialEndSilence	AG	AGType	AGImage	AGAudio	AGVideo	AGTime	AGgetInput	AGWidth	AGHeight
-AG	1													1	movie		balloons_5	balloons_5	5000			
-training	2	1	reliable	exp2	left	left	ball	car	see_ball	exp2_left_see_ball	5000											
-training	3	1	unreliable	exp1	right	none	truck	apple	find_dog	exp1_right_find_dog	5000											
-training	4	1	unreliable	exp1	right	none	duck	bear	look_train	exp1_right_look_train	5000											
-training	5	1	reliable	exp2	left	right	shoe	book	wheres_book	exp2_left_wheres_book	5000											
-AG	7													1	movie		spinningballs_5	spinningballs_5	5000			
-training	8	1	unreliable	exp1	right	none	car	ball	find_hat	exp1_right_find_hat	5000											
-training	9	1	reliable	exp2	left	left	apple	truck	look_apple	exp2_left_look_apple	5000											
-training	10	1	reliable	exp2	left	right	bear	duck	wheres_duck	exp2_left_wheres_duck	5000											
-training	11	1	unreliable	exp1	right	none	book	shoe	see_cat	exp1_right_see_cat	5000											
-AG	12													1	movie		kangaroo_5	kangaroo_5	5000			
-PauseAG	13													1	image	ocean	none		5000			
-AG	14													1	movie		balloons_5	balloons_5	5000			
-training	15	2	reliable	exp2	left	right	car	ball	see_ball	exp2_left_see_ball	5000											
-training	16	2	unreliable	exp1	right	none	apple	truck	find_dog	exp1_right_find_dog	5000											
-training	17	2	unreliable	exp1	right	none	bear	duck	look_train	exp1_right_look_train	5000											
-training	18	2	reliable	exp2	left	left	book	shoe	wheres_book	exp2_left_wheres_book	5000											
-AG	19													1	movie		spinningballs_5	spinningballs_5	5000			
-training	20	2	unreliable	exp1	right	none	ball	car	find_hat	exp1_right_find_hat	5000											
-training	21	2	reliable	exp2	left	right	truck	apple	look_apple	exp2_left_look_apple	5000											
-training	22	2	reliable	exp2	left	left	duck	bear	wheres_duck	exp2_left_wheres_duck	5000											
-training	23	2	unreliable	exp1	right	none	shoe	book	see_cat	exp1_right_see_cat	5000											
-AG	24													1	movie		kangaroo_5	kangaroo_5	5000			
+trialType,trialID,blockID,speakerType,speakerExp,speakerPos,targetPos,leftImage,rightImage,label,video,trialDuration,trialStartSilence,trialEndSilence,AG,AGType,AGImage,AGAudio,AGVideo,AGTime,AGgetInput,AGWidth,AGHeight
+AG,1,,,,,,,,,,,,,1,movie,,balloons_5,balloons_5,5000,,,
+training,2,1,reliable,exp2,left,left,ball,car,see_ball,exp2_left_see_ball,5000,,,,,,,,,,,
+training,3,1,unreliable,exp1,right,none,truck,apple,find_dog,exp1_right_find_dog,5000,,,,,,,,,,,
+training,4,1,unreliable,exp1,right,none,duck,bear,look_train,exp1_right_look_train,5000,,,,,,,,,,,
+training,5,1,reliable,exp2,left,right,shoe,book,wheres_book,exp2_left_wheres_book,5000,,,,,,,,,,,
+AG,7,,,,,,,,,,,,,1,movie,,spinningballs_5,spinningballs_5,5000,,,
+training,8,1,unreliable,exp1,right,none,car,ball,find_hat,exp1_right_find_hat,5000,,,,,,,,,,,
+training,9,1,reliable,exp2,left,left,apple,truck,look_apple,exp2_left_look_apple,5000,,,,,,,,,,,
+training,10,1,reliable,exp2,left,right,bear,duck,wheres_duck,exp2_left_wheres_duck,5000,,,,,,,,,,,
+training,11,1,unreliable,exp1,right,none,book,shoe,see_cat,exp1_right_see_cat,5000,,,,,,,,,,,
+AG,12,,,,,,,,,,,,,1,movie,,kangaroo_5,kangaroo_5,5000,,,
+PauseAG,13,,,,,,,,,,,,,1,image,ocean,none,,5000,,,
+AG,14,,,,,,,,,,,,,1,movie,,balloons_5,balloons_5,5000,,,
+training,15,2,reliable,exp2,left,right,car,ball,see_ball,exp2_left_see_ball,5000,,,,,,,,,,,
+training,16,2,unreliable,exp1,right,none,apple,truck,find_dog,exp1_right_find_dog,5000,,,,,,,,,,,
+training,17,2,unreliable,exp1,right,none,bear,duck,look_train,exp1_right_look_train,5000,,,,,,,,,,,
+training,18,2,reliable,exp2,left,left,book,shoe,wheres_book,exp2_left_wheres_book,5000,,,,,,,,,,,
+AG,19,,,,,,,,,,,,,1,movie,,spinningballs_5,spinningballs_5,5000,,,
+training,20,2,unreliable,exp1,right,none,ball,car,find_hat,exp1_right_find_hat,5000,,,,,,,,,,,
+training,21,2,reliable,exp2,left,right,truck,apple,look_apple,exp2_left_look_apple,5000,,,,,,,,,,,
+training,22,2,reliable,exp2,left,left,duck,bear,wheres_duck,exp2_left_wheres_duck,5000,,,,,,,,,,,
+training,23,2,unreliable,exp1,right,none,shoe,book,see_cat,exp1_right_see_cat,5000,,,,,,,,,,,
+AG,24,,,,,,,,,,,,,1,movie,,kangaroo_5,kangaroo_5,5000,,,

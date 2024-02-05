@@ -27,6 +27,9 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+BabyInfo_v1/eyetrackingData/delete/*
+BabyInfo_v1/data/delete/*
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
