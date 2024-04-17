@@ -465,7 +465,7 @@ class ExpPresentation(Exp):
 	def presentActiveTrial(self, curTrial, curActiveTrialIndex, trialFieldNames, stage):
 		csv_header = ["timestamp","eyetrackerLog",  "sampledLook", "avgPOS", "curLook",  "response"]
 
-		filename = 'data/' + 'training_data_' + self.experiment.subjVariables['subjCode'] + '.csv'
+		filename = 'data/' + 'training_data_' + self.experiment.subjVariables['subjCode'] + '.txt'
 
 		with open(filename, "w", newline='') as file:
 			writer = csv.writer(file)
@@ -506,12 +506,12 @@ class ExpPresentation(Exp):
 
 
 		# Initialize Screens
-		self.activeGrayScreen = libscreen.Screen(disptype='psychopy')
-		self.activeColorScreen = libscreen.Screen(disptype='psychopy')
+		self.activeGrayScreen = libscreen.Screen(fgc="#3b3b3b", bgc="#3b3b3b", disptype='psychopy')
+		self.activeColorScreen = libscreen.Screen(fgc="#3b3b3b", bgc="#3b3b3b", disptype='psychopy')
 
 		# activated screens
-		self.activeLeftScreen = libscreen.Screen(disptype='psychopy')
-		self.activeRightScreen = libscreen.Screen(disptype='psychopy')
+		self.activeLeftScreen = libscreen.Screen(fgc="#3b3b3b", bgc="#3b3b3b", disptype='psychopy')
+		self.activeRightScreen = libscreen.Screen(fgc="#3b3b3b", bgc="#3b3b3b", disptype='psychopy')
 
 		#Active Gray
 		buildScreenPsychoPy(self.activeGrayScreen, [self.leftSpeakerGrayImage, self.rightSpeakerGrayImage])
