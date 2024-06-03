@@ -465,9 +465,13 @@ class ExpPresentation(Exp):
 	def presentActiveTrial(self, curTrial, curActiveTrialIndex, trialFieldNames, stage):
 		csv_header = ["timestamp","eyetrackerLog",  "sampledLook", "avgPOS", "curLook",  "response"]
 
+<<<<<<< Updated upstream
 		filename = 'data/' + 'training_data_' + self.experiment.subjVariables['subjCode'] + '.csv'
+=======
+		trigger_filename = 'data/' + stage + '/' + 'training_data_' + self.experiment.subjVariables['subjCode'] + '.txt'
+>>>>>>> Stashed changes
 
-		with open(filename, "w", newline='') as file:
+		with open(trigger_filename, "w", newline='') as file:
 			writer = csv.writer(file)
 			writer.writerow(csv_header)
 		# Contingent Timing Vars
@@ -589,7 +593,7 @@ class ExpPresentation(Exp):
 							 , None, None
 							 , None]
 
-			with open(filename, 'a', newline='') as file:
+			with open(trigger_filename, 'a', newline='') as file:
 				writer = csv.writer(file)
 				writer.writerow(log_file_list)
 
@@ -729,7 +733,7 @@ class ExpPresentation(Exp):
 						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook,
 										 curLook, response]
 
-						with open(filename, 'a', newline='') as file:
+						with open(trigger_filename, 'a', newline='') as file:
 							writer = csv.writer(file)
 							writer.writerow(log_file_list)
 
@@ -750,7 +754,7 @@ class ExpPresentation(Exp):
 						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook,
 										 curLook, response]
 
-						with open(filename, 'a', newline='') as file:
+						with open(trigger_filename, 'a', newline='') as file:
 							writer = csv.writer(file)
 							writer.writerow(log_file_list)
 					selectionTime = libtime.get_time()
@@ -783,7 +787,7 @@ class ExpPresentation(Exp):
 					log_file_list = [libtime.get_time(), "audio" + str(selectionNum),
 									 curLook, response]
 
-					with open(filename, 'a', newline='') as file:
+					with open(trigger_filename, 'a', newline='') as file:
 						writer = csv.writer(file)
 						writer.writerow(log_file_list)
 
@@ -846,13 +850,13 @@ class ExpPresentation(Exp):
 							"audioEnd" + str(selectionNum))
 						log_file_list = [libtime.get_time(), "audioEnd" + str(selectionNum),  curLook, response]
 
-						with open(filename, 'a', newline='') as file:
+						with open(trigger_filename, 'a', newline='') as file:
 							writer = csv.writer(file)
 							writer.writerow(log_file_list)
 
 			log_file_list = [libtime.get_time(), None, curLook, response]
 
-			with open(filename, 'a', newline='') as file:
+			with open(trigger_filename, 'a', newline='') as file:
 				writer = csv.writer(file)
 				writer.writerow(log_file_list)
 		if eventTriggered == 1:
