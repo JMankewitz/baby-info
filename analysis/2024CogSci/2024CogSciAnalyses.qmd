@@ -10,8 +10,8 @@ library(here)
 library(tidyverse)
 library(cowplot)
 
-read_file_path <- here("analysis/preprocessedGazeData/v1/")
-write_figures <- here("analysis/2024CogSci/figures/")
+read_file_path <- here("analysis/preprocessedGazeData/cogsci2024/")
+write_figures <- here("analysis/2024CogSci/newfigures/")
 
 d_active_training <- read_csv(paste0(read_file_path, 'training_aois.csv'))
 d_training <- read_csv(paste0(read_file_path, "training_aois.csv"))
@@ -19,9 +19,17 @@ d_active_test <- read_csv(paste0(read_file_path, "active_test_aois.csv"))
 
 file_name <- here("analysis/2024CogSci/")
 
-subj_data <- read_csv(here("analysis/2024CogSci/subj_data_clean_2024-01-29.csv")) |> 
+subj_data <- read_csv(here("analysis/2024CogSci/subj_data_clean_2024-05-07.csv")) |> 
   janitor::clean_names() |> rename(subjCode= sub_num)
 ```
+
+```{r}
+group_colors <- c("Reliable Sp." = "#2E9093", "Unreliable Sp." = "#920530", 
+                  "Target Obj." = "#545454", "Distractor Obj." = "#EDC132", 
+                  "Informative" = "#2E9093", "Uninformative" = "#920530")
+
+```
+
 
 Analyses and Figure Generator for my 2024 CogSci Paper Submission
 
@@ -36,18 +44,22 @@ Total N
 TODO: Recover BI117, get data for BI125
 
 ```{r}
+excluded_participants <- subj_data |> filter(include == "no") |> pull(subjCode)
+
 collected_data <- d_active_training |> pull(subjCode) |> unique()
 length(collected_data)
 
-fuss_participants <- c("BI100", "BI123", "BI127")
+fuss_participants <- subj_data |> filter(include == "no", why_category == "fussed") |> pull(subjCode)
 length(fuss_participants)
 
-calibration_error <- c("BI104REAL", "BI107", "BI112", "BI116", "BI1242")
+calibration_error <-subj_data |> filter(include == "no", why_category == "track") |> pull(subjCode)
 length(calibration_error)
 
 
 remaining_participants <- setdiff(setdiff(collected_data, fuss_participants), calibration_error)
 length(remaining_participants)
+
+subj_data |> filter(include == "yes")
 ```
 
 Data was collected from N = `r length(collected_data)` participants. N = `r length(fuss_participants)` participants were unable to complete the experiment due to fussiness. An additional N = `r length(calibration_error)` participants were removed do to issues with the eyetracker or eyetracker calibration. The data from the remaining N = `r length(remaining_participants)` are included in these analyses. 
@@ -162,7 +174,6 @@ summarize_across_subj <- summarize_by_subj %>%
          accuracy=mean(proportion_aoi,na.rm=TRUE),
          sd_accuracy=sd(proportion_aoi,na.rm=TRUE))
 
-summarize_across_subj$alpha_factor = factor()
 
 summarize_across_subj$alpha_factor <- factor(summarize_across_subj$condAOI_factor,
                                 levels = c("Reliable Sp.", "Unreliable Sp.", "Target Obj.", "Distractor Obj."),
@@ -406,19 +417,18 @@ first_look_by_participant <- first_look |>
   summarize(mean_start_time = mean(start_time),
             sd_start_time = sd(start_time),
             mean_duration = mean(duration),
-         sd_duration = sd(duration))
+            sd_duration = sd(duration))
 
 first_look_plot <- first_look_by_participant |> 
   ggplot(aes(y = mean_start_time/1000, x = condAOI_factor, fill = condAOI_factor)) + 
   geom_bar(stat = "identity") + 
   facet_grid(cols = vars(trialIDfactor)) + 
-  #geom_errorbar(aes(ymin = mean_duration-sd_start_time, ymax = mean_duration+sd_start_time)) +
   geom_point(data = first_look, aes(y = start_time/1000), alpha = .3) + 
   theme_minimal() + 
     scale_fill_manual(values = c("Reliable"="#3a86ff",
                                 "Unreliable"="#ff006e")) +
   labs(x = "Sampled Speaker", 
-       y = "Time of First Fixation (s)",
+       y = "Onset of First Fixation (s)",
        title = "Onset of First Fixation",
        subtitle = "For fixations greater than 300ms") + 
   theme(legend.position = "none")
@@ -469,7 +479,7 @@ library(patchwork)
 ggsave(paste0(write_figures, "sampling_results_lines.pdf"), width = 7, height = 2) 
 
 (first_look_lines / sample_duration_bar_lines) + plot_annotation(tag_levels = 'A')
-ggsave(paste0(write_figures, "sampling_results_lines_stacked.pdf"), width = 3.5, height = 6) 
+ggsave(paste0(write_figures, "sampling_results_lines_stacked.pdf"), width = 3.5, height = 5) 
 
 ```
 
@@ -528,21 +538,21 @@ keep_training_trials %>%
   group_by(speakerType)  |>  
     dplyr::summarize(Mean = mean(n, na.rm=TRUE),
                      SD = sd(n, na.rm=TRUE)) |> 
-  mutate(CI_low = Mean - (SD/sqrt(13))*1.96,
-         CI_high = Mean + (SD/sqrt(13))*1.96)
+  mutate(CI_low = Mean - (SD/sqrt(17))*1.96,
+         CI_high = Mean + (SD/sqrt(17))*1.96)
 
 
 print("Attention to proportions during training")
   
 reliab_summarize_across_subj |> 
-  mutate(CI_low = accuracy - (sd_accuracy/sqrt(13))*1.96,
-         CI_high = accuracy + (sd_accuracy/sqrt(13))*1.96)
+  mutate(CI_low = accuracy - (sd_accuracy/sqrt(17))*1.96,
+         CI_high = accuracy + (sd_accuracy/sqrt(17))*1.96)
 
 print("Proportion Looking test")
 
 sample_duration_across_subj  |> 
-  mutate(CI_low = mean_duration - (sd_duration/sqrt(13))*1.96,
-         CI_high = mean_duration + (sd_duration/sqrt(13))*1.96)
+  mutate(CI_low = mean_duration - (sd_duration/sqrt(17))*1.96,
+         CI_high = mean_duration + (sd_duration/sqrt(17))*1.96)
 
 print("First fixation")
 
@@ -552,10 +562,10 @@ first_look |>
             sd_start_time = sd(start_time),
             mean_duration = mean(duration),
          sd_duration = sd(duration)) |> 
-  mutate(start_CI_low = mean_start_time - (sd_start_time/sqrt(13))*1.96,
-         start_CI_high = mean_start_time + (sd_start_time/sqrt(13))*1.96,
-    duration_CI_low = mean_duration - (sd_duration/sqrt(13))*1.96,
-         duration_CI_high = mean_duration + (sd_duration/sqrt(13))*1.96)
+  mutate(start_CI_low = mean_start_time - (sd_start_time/sqrt(25))*1.96,
+         start_CI_high = mean_start_time + (sd_start_time/sqrt(25))*1.96,
+    duration_CI_low = mean_duration - (sd_duration/sqrt(25))*1.96,
+         duration_CI_high = mean_duration + (sd_duration/sqrt(25))*1.96)
 ```
 
 

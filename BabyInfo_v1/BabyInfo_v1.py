@@ -1,4 +1,4 @@
-import psychopy.hardware.keyboard
+from psychopy.hardware import keyboard
 import pygaze
 from pygaze import libscreen, libinput, eyetracker
 from pygaze.plugins import aoi
@@ -88,7 +88,7 @@ class Exp:
 			if not optionsReceived:
 				popupError(self.subjVariables)
 
-			elif not os.path.isfile('data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt'):
+			elif not os.path.isfile('data/training/' + 'tracking_data_' + self.subjVariables['subjCode'] + '.txt'):
 
 				# if using an eyetracker
 				if self.subjVariables['eyetracker'] == "yes":
@@ -98,12 +98,12 @@ class Exp:
 					if not os.path.isfile(settings.LOGFILE + '_TOBII_output.tsv'):
 						fileOpened = True
 						self.activeTrainingOutputFile = open(
-							'data/' + 'active_training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
+							'data/activeTraining/' + 'tracking_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
 
-						self.trainingOutputFile = open('data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt',
+						self.trainingOutputFile = open('data/training/' + 'tracking_data_' + self.subjVariables['subjCode'] + '.txt',
 												   'w')
 						self. activeOutputFile = open(
-							'data/' + 'active_data_' + self.subjVariables['subjCode'] + '.txt',
+							'data/' + 'activeTest/tracking_data_' + self.subjVariables['subjCode'] + '.txt',
 							'w')
 
 					else:
@@ -115,7 +115,7 @@ class Exp:
 					#if eyetracker is no, only track the training output
 					fileOpened = True
 					self.trainingOutputFile = open(
-						'data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
+						'data/training/' + 'tracking_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
 
 			else:
 				fileOpened = False
@@ -156,12 +156,12 @@ class Exp:
 			self.inputDevice = "keyboard"
 			self.validResponses = {'1': 'space', '2': 'left', '3': 'right', '4': 'z', '5': 'enter'}
 		# create keyboard object
-			self.input = libinput.Keyboard(keylist=['space', 'enter', 'left', 'right'], timeout=None)
+			self.input = keyboard.Keyboard()
 
 		else:
 			self.inputDevice = "mouse"
 			print("using mouse...")
-			self.input = libinput.Mouse(mousebuttonlist = [1], timeout = None)
+			#self.input = libinput.Mouse(mousebuttonlist = [1], timeout = None)
 
 
 class ExpPresentation(Exp):
@@ -194,6 +194,7 @@ class ExpPresentation(Exp):
 		self.stars = loadFiles(self.experiment.AGPath, ['.jpg'], 'image', self.experiment.win)
 
 		self.locations = ['left', 'right']
+		self.trigger = 0 # start trigger for eyetracker (0) vs keyboard (1)
 
 		# dimensions MATH ugh
 
@@ -245,11 +246,10 @@ class ExpPresentation(Exp):
 
 	def presentScreen(self, screen):
 		setAndPresentScreen(self.experiment.disp, screen)
-		self.experiment.input.get_key()
+		self.experiment.input.waitKeys(keyList=['space', 'enter', 'left', 'right', 'down'])
 		self.experiment.disp.show()
 
 	def cycleThroughTrials(self, whichPart):
-
 		curFamilTrialIndex = 1
 
 		if whichPart == "familiarizationPhase":
@@ -363,7 +363,7 @@ class ExpPresentation(Exp):
 
 		# if getInput=True, wait for keyboard press before advancing
 		if getInput == "yes":
-			self.experiment.input.get_key()
+			self.experiment.input.waitKeys(keyList=['space'])
 
 		if self.experiment.subjVariables['eyetracker'] == "yes":
 			# stop eye tracking
@@ -464,10 +464,10 @@ class ExpPresentation(Exp):
 
 	def presentActiveTrial(self, curTrial, curActiveTrialIndex, trialFieldNames, stage):
 		csv_header = ["timestamp","eyetrackerLog",  "sampledLook", "avgPOS", "curLook",  "response"]
+		trigger_filename = 'data/' + stage + '/' + 'tracking_data_' + self.experiment.subjVariables['subjCode'] + '.txt'
 
-		filename = 'data/' + 'training_data_' + self.experiment.subjVariables['subjCode'] + '.csv'
 
-		with open(filename, "w", newline='') as file:
+		with open(trigger_filename, "w", newline='') as file:
 			writer = csv.writer(file)
 			writer.writerow(csv_header)
 		# Contingent Timing Vars
@@ -589,9 +589,9 @@ class ExpPresentation(Exp):
 							 , None, None
 							 , None]
 
-			with open(filename, 'a', newline='') as file:
-				writer = csv.writer(file)
-				writer.writerow(log_file_list)
+		with open(trigger_filename, 'a', newline='') as file:
+			writer = csv.writer(file)
+			writer.writerow(log_file_list)
 
 		#### Contingent Start #
 		trialTimerStart = libtime.get_time()
@@ -652,25 +652,54 @@ class ExpPresentation(Exp):
 				# else:
 				# 	gazepos = self.lookAwayPos
 
-			if self.aoiLeft.contains(sampledGazePos):
-				if t0Left == None:
-					t0Left = libtime.get_time()
-				curLook = "left"
-			elif self.aoiRight.contains(sampledGazePos):
-				#countRight += 1
-				if t0Right == None:
-					t0Right = libtime.get_time()
-				curLook = "right"
-			elif sampledGazePos == self.lookAwayPos:
-				if t0Away == None:
-					t0Away = libtime.get_time()
-				curLook = "away"
-			else:
-				if t0None == None:
-					t0None = libtime.get_time()
-				curLook = "none"
+				if self.aoiLeft.contains(sampledGazePos):
+					if t0Left == None:
+						t0Left = libtime.get_time()
+					curLook = "left"
+				elif self.aoiRight.contains(sampledGazePos):
+					#countRight += 1
+					if t0Right == None:
+						t0Right = libtime.get_time()
+					curLook = "right"
+				elif sampledGazePos == self.lookAwayPos:
+					if t0Away == None:
+						t0Away = libtime.get_time()
+					curLook = "away"
+				else:
+					if t0None == None:
+						t0None = libtime.get_time()
+					curLook = "none"
 
-			print(curLook)
+			if self.experiment.subjVariables['activeMode'] == 'input':
+				curLook = "away"
+				keys = self.experiment.input.getKeys(waitRelease=False, clear=False)
+				keynames = [key.name for key in keys]
+
+
+				if (keys and not keys[-1].duration): #if key is being held down
+					#
+
+					currkey = keys[-1].name
+
+					if currkey == 'left':
+						if t0Left == None:
+							t0Left = libtime.get_time()
+						curLook = "left"
+					elif currkey == 'right':
+						#countRight += 1
+						if t0Right == None:
+							t0Right = libtime.get_time()
+						curLook = "right"
+					elif currkey == None:
+						if t0None == None:
+							t0None = libtime.get_time()
+						curLook = "none"
+					else:
+						if t0Away == None:
+							t0Away = libtime.get_time()
+						curLook = "away"
+					print(curLook)
+			#print(curLook)
 
 			# If an event has already been triggered, it can not be the first trigger
 			if eventTriggered == 1:
@@ -698,12 +727,11 @@ class ExpPresentation(Exp):
 					if self.experiment.subjVariables['eyetracker'] == 'yes':
 						self.experiment.tracker.log("selection" + str(selectionNum) + "    " + curLook)
 						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook,
-										 sampledGazePos, sampledGazePos,
 										 curLook, response]
 
-						with open(filename, 'a', newline='') as file:
-							writer = csv.writer(file)
-							writer.writerow(log_file_list)
+					with open(trigger_filename, 'a', newline='') as file:
+						writer = csv.writer(file)
+						writer.writerow(log_file_list)
 
 				elif (t0Right is not None) and libtime.get_time() - t0Right >= self.firstTriggerThreshold:
 					selectionNum += 1
@@ -719,12 +747,12 @@ class ExpPresentation(Exp):
 					# log event
 					if self.experiment.subjVariables['eyetracker'] == 'yes':
 						self.experiment.tracker.log("selection" + str(selectionNum) + "    " + curLook)
-						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook, sampledGazePos, sampledGazePos,
+						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook,
 										 curLook, response]
 
-						with open(filename, 'a', newline='') as file:
-							writer = csv.writer(file)
-							writer.writerow(log_file_list)
+					with open(trigger_filename, 'a', newline='') as file:
+						writer = csv.writer(file)
+						writer.writerow(log_file_list)
 					selectionTime = libtime.get_time()
 					gazeCon = True
 					contingent = True
@@ -752,12 +780,12 @@ class ExpPresentation(Exp):
 				if self.experiment.subjVariables['eyetracker'] == "yes":
 					# log audio event
 					self.experiment.tracker.log("audio" + str(selectionNum))
-					log_file_list = [libtime.get_time(), "audio" + str(selectionNum), sampledGazePos, sampledGazePos,
+				log_file_list = [libtime.get_time(), "audio" + str(selectionNum),
 									 curLook, response]
 
-					with open(filename, 'a', newline='') as file:
-						writer = csv.writer(file)
-						writer.writerow(log_file_list)
+				with open(trigger_filename, 'a', newline='') as file:
+					writer = csv.writer(file)
+					writer.writerow(log_file_list)
 
 			if eventTriggered == 1:
 
@@ -780,7 +808,6 @@ class ExpPresentation(Exp):
 						t0None = libtime.get_time()
 
 				# Build threshold booleans outside if statement for clarity
-
 				if t0Away != None:
 					if libtime.get_time() - t0Away >= self.awayThreshold:
 						triggerEnd = True
@@ -793,6 +820,8 @@ class ExpPresentation(Exp):
 						print("End None:", libtime.get_time() - t0None)
 					else:
 						triggerEnd = False
+				else:
+					triggerEnd = True
 
 				# check if the infant has switched
 				if (curLook != response and triggerEnd) or libtime.get_time() - audioTime > self.maxLabelTime:
@@ -815,15 +844,15 @@ class ExpPresentation(Exp):
 						# log audio event end
 						self.experiment.tracker.log(
 							"audioEnd" + str(selectionNum))
-						log_file_list = [libtime.get_time(), "audioEnd" + str(selectionNum), sampledGazePos, sampledGazePos, curLook, response]
+					log_file_list = [libtime.get_time(), "audioEnd" + str(selectionNum),  curLook, response]
 
-						with open(filename, 'a', newline='') as file:
-							writer = csv.writer(file)
-							writer.writerow(log_file_list)
+					with open(trigger_filename, 'a', newline='') as file:
+						writer = csv.writer(file)
+						writer.writerow(log_file_list)
 
-			log_file_list = [libtime.get_time(), None, sampledGazePos, sampledGazePos, curLook, response]
+			log_file_list = [libtime.get_time(), None, curLook, response]
 
-			with open(filename, 'a', newline='') as file:
+			with open(trigger_filename, 'a', newline='') as file:
 				writer = csv.writer(file)
 				writer.writerow(log_file_list)
 		if eventTriggered == 1:
