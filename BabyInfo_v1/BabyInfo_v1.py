@@ -88,7 +88,7 @@ class Exp:
 			if not optionsReceived:
 				popupError(self.subjVariables)
 
-			elif not os.path.isfile('data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt'):
+			elif not os.path.isfile('data/training/' + 'tracking_data_' + self.subjVariables['subjCode'] + '.txt'):
 
 				# if using an eyetracker
 				if self.subjVariables['eyetracker'] == "yes":
@@ -98,12 +98,12 @@ class Exp:
 					if not os.path.isfile(settings.LOGFILE + '_TOBII_output.tsv'):
 						fileOpened = True
 						self.activeTrainingOutputFile = open(
-							'data/' + 'active_training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
+							'data/activeTraining/' + 'tracking_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
 
-						self.trainingOutputFile = open('data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt',
+						self.trainingOutputFile = open('data/training/' + 'tracking_data_' + self.subjVariables['subjCode'] + '.txt',
 												   'w')
 						self. activeOutputFile = open(
-							'data/' + 'active_data_' + self.subjVariables['subjCode'] + '.txt',
+							'data/' + 'activeTest/tracking_data_' + self.subjVariables['subjCode'] + '.txt',
 							'w')
 
 					else:
@@ -115,7 +115,7 @@ class Exp:
 					#if eyetracker is no, only track the training output
 					fileOpened = True
 					self.trainingOutputFile = open(
-						'data/' + 'training_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
+						'data/training/' + 'tracking_data_' + self.subjVariables['subjCode'] + '.txt', 'w')
 
 			else:
 				fileOpened = False
@@ -464,10 +464,10 @@ class ExpPresentation(Exp):
 
 	def presentActiveTrial(self, curTrial, curActiveTrialIndex, trialFieldNames, stage):
 		csv_header = ["timestamp","eyetrackerLog",  "sampledLook", "avgPOS", "curLook",  "response"]
+		trigger_filename = 'data/' + stage + '/' + 'tracking_data_' + self.experiment.subjVariables['subjCode'] + '.txt'
 
-		filename = 'data/' + 'training_data_' + self.experiment.subjVariables['subjCode'] + '.txt'
 
-		with open(filename, "w", newline='') as file:
+		with open(trigger_filename, "w", newline='') as file:
 			writer = csv.writer(file)
 			writer.writerow(csv_header)
 		# Contingent Timing Vars
@@ -506,12 +506,12 @@ class ExpPresentation(Exp):
 
 
 		# Initialize Screens
-		self.activeGrayScreen = libscreen.Screen(fgc="#3b3b3b", bgc="#3b3b3b", disptype='psychopy')
-		self.activeColorScreen = libscreen.Screen(fgc="#3b3b3b", bgc="#3b3b3b", disptype='psychopy')
+		self.activeGrayScreen = libscreen.Screen(disptype='psychopy')
+		self.activeColorScreen = libscreen.Screen(disptype='psychopy')
 
 		# activated screens
-		self.activeLeftScreen = libscreen.Screen(fgc="#3b3b3b", bgc="#3b3b3b", disptype='psychopy')
-		self.activeRightScreen = libscreen.Screen(fgc="#3b3b3b", bgc="#3b3b3b", disptype='psychopy')
+		self.activeLeftScreen = libscreen.Screen(disptype='psychopy')
+		self.activeRightScreen = libscreen.Screen(disptype='psychopy')
 
 		#Active Gray
 		buildScreenPsychoPy(self.activeGrayScreen, [self.leftSpeakerGrayImage, self.rightSpeakerGrayImage])
@@ -589,9 +589,9 @@ class ExpPresentation(Exp):
 							 , None, None
 							 , None]
 
-			with open(filename, 'a', newline='') as file:
-				writer = csv.writer(file)
-				writer.writerow(log_file_list)
+		with open(trigger_filename, 'a', newline='') as file:
+			writer = csv.writer(file)
+			writer.writerow(log_file_list)
 
 		#### Contingent Start #
 		trialTimerStart = libtime.get_time()
@@ -674,13 +674,13 @@ class ExpPresentation(Exp):
 				curLook = "away"
 				keys = self.experiment.input.getKeys(waitRelease=False, clear=False)
 				keynames = [key.name for key in keys]
-				print(keynames)
+
 
 				if (keys and not keys[-1].duration): #if key is being held down
 					#
-					print(keys[-1].name, keys[-1].duration)
+
 					currkey = keys[-1].name
-					print(currkey)
+
 					if currkey == 'left':
 						if t0Left == None:
 							t0Left = libtime.get_time()
@@ -729,9 +729,9 @@ class ExpPresentation(Exp):
 						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook,
 										 curLook, response]
 
-						with open(filename, 'a', newline='') as file:
-							writer = csv.writer(file)
-							writer.writerow(log_file_list)
+					with open(trigger_filename, 'a', newline='') as file:
+						writer = csv.writer(file)
+						writer.writerow(log_file_list)
 
 				elif (t0Right is not None) and libtime.get_time() - t0Right >= self.firstTriggerThreshold:
 					selectionNum += 1
@@ -750,9 +750,9 @@ class ExpPresentation(Exp):
 						log_file_list = [libtime.get_time(), "selection" + str(selectionNum) + "    " + curLook,
 										 curLook, response]
 
-						with open(filename, 'a', newline='') as file:
-							writer = csv.writer(file)
-							writer.writerow(log_file_list)
+					with open(trigger_filename, 'a', newline='') as file:
+						writer = csv.writer(file)
+						writer.writerow(log_file_list)
 					selectionTime = libtime.get_time()
 					gazeCon = True
 					contingent = True
@@ -780,12 +780,12 @@ class ExpPresentation(Exp):
 				if self.experiment.subjVariables['eyetracker'] == "yes":
 					# log audio event
 					self.experiment.tracker.log("audio" + str(selectionNum))
-					log_file_list = [libtime.get_time(), "audio" + str(selectionNum),
+				log_file_list = [libtime.get_time(), "audio" + str(selectionNum),
 									 curLook, response]
 
-					with open(filename, 'a', newline='') as file:
-						writer = csv.writer(file)
-						writer.writerow(log_file_list)
+				with open(trigger_filename, 'a', newline='') as file:
+					writer = csv.writer(file)
+					writer.writerow(log_file_list)
 
 			if eventTriggered == 1:
 
@@ -844,15 +844,15 @@ class ExpPresentation(Exp):
 						# log audio event end
 						self.experiment.tracker.log(
 							"audioEnd" + str(selectionNum))
-						log_file_list = [libtime.get_time(), "audioEnd" + str(selectionNum),  curLook, response]
+					log_file_list = [libtime.get_time(), "audioEnd" + str(selectionNum),  curLook, response]
 
-						with open(filename, 'a', newline='') as file:
-							writer = csv.writer(file)
-							writer.writerow(log_file_list)
+					with open(trigger_filename, 'a', newline='') as file:
+						writer = csv.writer(file)
+						writer.writerow(log_file_list)
 
 			log_file_list = [libtime.get_time(), None, curLook, response]
 
-			with open(filename, 'a', newline='') as file:
+			with open(trigger_filename, 'a', newline='') as file:
 				writer = csv.writer(file)
 				writer.writerow(log_file_list)
 		if eventTriggered == 1:

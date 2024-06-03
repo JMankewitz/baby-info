@@ -33,6 +33,7 @@ source("Pygaze_InterpolateAOIHits.R")
 
 eyetracking_data_path <- "/Users/jessicamankewitz/projects/baby-info/BabyInfo_v1/eyetrackingData"
 trials_path <- here('BabyInfo_v1/data')
+write_file_location <- "preprocessedGazeData/cogsci2024/"
 ```
 
 The following code reads each .tsv, extracts the following columns:
@@ -548,7 +549,6 @@ d_final_training_aoi_clean <- d_final_training_aoi |>  left_join(d_final_trainin
 # Write Data
 
 ```{r}
-write_file_location <- "preprocessedGazeData/v1/"
 
 d_final_active_training_aoi_clean |> write_csv(file = paste0("/Users/jessicamankewitz/projects/baby-info/analysis/", write_file_location, "active_training_aois.csv"))
 d_final_training_aoi_clean |> write_csv(file = paste0("/Users/jessicamankewitz/projects/baby-info/analysis/", write_file_location, "training_aois.csv"))
