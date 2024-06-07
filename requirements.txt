@@ -201,7 +201,6 @@ six==1.16.0
 smmap==5.0.0
 soundfile==0.12.1
 soupsieve==2.4.1
-tables==3.8.0
 tobii-research==1.10.1
 tqdm==4.65.0
 tzdata==2023.3
