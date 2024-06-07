@@ -192,7 +192,6 @@ python-gitlab==3.15.0
 python-pygaze==0.7.6
 python-vlc==3.0.18122
 pytz==2023.3
-PyYAML==6.0
 pyzmq==25.1.0
 questplus==2023.1
 requests==2.31.0
