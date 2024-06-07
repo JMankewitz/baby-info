@@ -196,9 +196,9 @@ pyobjc-framework-vision=7.3=pypi_0
 pyobjc-framework-webkit=7.3=pypi_0
 pyparsing=3.0.9=pypi_0
 pypi-search=1.2.2=pypi_0
-pyqt5=5.15.9=pypi_0
-pyqt5-qt5=5.15.2=pypi_0
-pyqt5-sip=12.12.1=pypi_0
+pyqt5>=5.15.9=pypi_0
+pyqt5-qt5>=5.15.2=pypi_0
+pyqt5-sip>=12.12.1=pypi_0
 pyserial=3.5=pypi_0
 python=3.8.16=hf9b03c3_1_cpython
 python-bidi=0.4.2=pypi_0
