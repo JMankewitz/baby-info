@@ -1,0 +1,567 @@
+---
+here()---
+title: "2024CogsciAnalyses"
+format: html
+editor: source
+---
+
+Analyses and figures for the 2024 Cogsci submission/paper titled "Toddlers Actively Sample from Reliable and Unreliable Speakers". This code generates the statistics and figures for the paper submission and the figures for the talk with updated data.
+
+The most recent data contribution was on July 3rd, 2024.
+
+# Setup
+
+Set theme information for consistent figure generation
+
+```{r}
+library(tidyverse)
+
+talk_theme <- theme(plot.title = element_text(size = 32),
+        strip.text.x = element_text(size = 24),
+        axis.text = element_text(size = 18),
+        axis.title = element_text(size = 24),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = 2),
+        panel.spacing = unit(2, "lines"),
+        legend.position = "right",
+        legend.text = element_text(size = 18),
+        legend.title = element_text(size = 24))
+
+group_colors <- c("Reliable Sp." = "#2E9093", "Unreliable Sp." = "#920530", 
+                  "Informative Sp." = "#2E9093", "Uninformative Sp." = "#920530", 
+                  "Target Obj." = "#545454", "Distractor Obj." = "#EDC132", 
+                  "Informative" = "#2E9093", "Uninformative" = "#920530")
+```
+
+Load packages and libraries
+
+```{r}
+library(here)
+library(lme4)
+library(lmerTest)
+```
+
+## Import preprocessed data
+
+All eyetracking (both automatic and handcoded) data was preprocessed with the `01_do_preprocessing.qmd` script. Additionally, all vocabulary survey information was preprocessed with the `01_do_vocab_preprocessing.qmd` script. All subject information was anonymized before storing on OSF or github.
+
+```{r message=FALSE, warning=FALSE}
+# set data paths
+read_file_path <- here("analysis/preprocessedGazeData/cogsci2024/")
+write_figures <- here("analysis/2024CogSci/newfigures/")
+
+# Eyetracking data
+d_active_training <- read_csv(paste0(read_file_path, 'active_training_aois.csv'), show_col_types = FALSE)
+d_training <- read_csv(paste0(read_file_path, "training_aois.csv"), show_col_types = FALSE)
+d_active_test <- read_csv(paste0(read_file_path, "active_test_aois.csv"), show_col_types = FALSE)
+
+# subject data
+subj_data <- read_csv(paste0(read_file_path, 'subject_log.csv'), show_col_types = FALSE) |> 
+  janitor::clean_names() |> rename(subjCode= sub_num)
+```
+
+# Exclusions
+
+## Participant-level
+
+```{r}
+
+
+excluded_participants <- subj_data |> filter(include == "no" | include == "No")
+fussed_participants <- subj_data |> filter(include == "no", why_category == "fussed")
+calibration_error <- subj_data |> filter(include == "no", why_category == "track")
+remaining_participants <- subj_data |> filter(include == "yes" | include == "yes" | include == "maybe")
+collected_data <- d_active_training |> pull(subjCode) |> unique()
+
+sprintf("%d/%d (%.2f%%) participants remain after participant-level exclusions", nrow(remaining_participants), length(collected_data), nrow(remaining_participants)/length(collected_data)*100) 
+sprintf("n=%i participants fussed out", nrow(fussed_participants))
+sprintf("n=%i participants had a calibration error", nrow(calibration_error))
+```
+
+Perform exclusions and check data counts 
+
+```{r}
+d_active_training_remaining <- d_active_training |> filter(subjCode %in% (remaining_participants |> pull(subjCode)))
+d_training_remaining <- d_training |> filter(subjCode %in% (remaining_participants |> pull(subjCode)))
+d_active_test_remaining <- d_active_test |> filter(subjCode %in% (remaining_participants |> pull(subjCode))) 
+
+# check reasonability of counts for each participant - note any outliers
+d_active_training_remaining |> pull(subjCode) |> table()
+d_training_remaining |> pull(subjCode) |> table()
+d_active_test_remaining |> pull(subjCode) |> table()
+```
+
+## Trial Level
+
+### Familiarization Phase
+
+```{r}
+excluded_d_training <- d_training_remaining |> 
+  # total # of frames per trial
+  group_by(subjCode, trialID) |> 
+  mutate(n_frames = n()) |> 
+  # get # of frames to each AOI
+  group_by(subjCode, trialID, speakerType, n_frames) |> 
+  summarize(N_NAAOI = sum(is.na(LookAOI)),
+            prop_na = N_NAAOI/n_frames) |> 
+  ungroup() |> 
+  distinct() |> 
+  mutate(exclude_trial = ifelse(prop_na >= .5, T, F))
+
+nrow(excluded_d_training)
+# should be n_participants * 16
+nrow(excluded_d_training) == length(d_training_remaining |> pull(subjCode) |> unique())*16
+
+# number of trials excluded: 
+nrow(excluded_d_training |> filter(exclude_trial == T))
+
+# number remaining
+nrow(excluded_d_training |> filter(exclude_trial == F))
+
+# percentage removed
+nrow(excluded_d_training |> filter(exclude_trial == T)) / nrow(excluded_d_training) * 100
+
+# report average # of trials seen by each participant
+excluded_d_training |>  
+  filter(exclude_trial == F) |> 
+  group_by(subjCode, speakerType) |>  
+  summarize(n = n()) |> 
+  group_by(subjCode) |> 
+  mutate(total_n = sum(n)) |> 
+  group_by(speakerType) |> 
+  summarize(mean_trials = mean(n))
+```
+
+```{r}
+final_training_data <- d_training_remaining |> 
+  left_join(excluded_d_training) |> 
+  filter(exclude_trial == F)
+
+final_training_data$condAOI_factor <- factor(final_training_data$condAOI,
+                                levels = c("reliable", "unreliable", 
+                                           "target", "distractor", "other"),
+                                labels = c("Reliable Sp.", "Unreliable Sp.", 
+                                           "Target Obj.", "Distractor Obj.", "Other"))
+
+final_training_data$speaker_type_factor <- factor(final_training_data$speakerType,
+                                levels = c("reliable", "unreliable"),
+                                labels = c("Reliable Trials", "Unreliable Trials"))
+```
+
+### Active Sampling Phase
+
+```{r}
+excluded_d_active <- d_active_test_remaining |> 
+  filter(TimeBinMs > 1000, TimeBinMs < 21000) |> # restirct to 20 seconds
+  group_by(subjCode, trialID) |> 
+  mutate(n_frames = n()) |> 
+  group_by(subjCode, trialID, n_frames) |> 
+  summarize(N_NAAOI = sum(is.na(LookAOI)),
+            prop_na = N_NAAOI/n_frames) |> 
+  distinct() |> 
+  mutate(exclude_trial = ifelse(prop_na >= .3, T, F))
+
+nrow(excluded_d_active)
+# should be n_participants * 2
+nrow(excluded_d_active) == length(excluded_d_active |> pull(subjCode) |> unique())*2
+
+# number of trials excluded: 
+nrow(excluded_d_active |> filter(exclude_trial == T))
+
+# number remaining
+nrow(excluded_d_active |> filter(exclude_trial == F))
+
+# percentage removed
+nrow(excluded_d_active |> filter(exclude_trial == T)) / nrow(excluded_d_active) * 100
+
+# report average # of trials seen by each participant
+kept_data_quality <- excluded_d_active |> 
+  filter(exclude_trial == F) |> 
+  mutate(n_good_frames = n_frames-N_NAAOI) |> 
+  group_by(subjCode) |> 
+  summarize(mean_n_good_frames = mean(n_good_frames),
+            mean_perc_missing = mean(prop_na)) |> 
+  mutate(perc_good = 1 - mean_perc_missing,
+         mean_good_seconds = mean_n_good_frames*16.66667)
+
+mean(kept_data_quality$perc_good)
+mean(kept_data_quality$mean_good_seconds)
+hist(kept_data_quality$mean_good_seconds)
+```
+
+```{r}
+final_active_data <- d_active_test_remaining |> 
+  left_join(excluded_d_active) |> 
+  filter(exclude_trial == F)
+
+final_active_data$condAOI_factor = factor(final_active_data$condAOI,
+                                      levels = c("reliable","unreliable"),
+                                      labels = c("Reliable", "Unreliable"))
+final_active_data$trialIDfactor = factor(final_active_data$trialID,
+                                      levels = c(1, 2),
+                                      labels = c("Trial 1", "Trial 2"))
+```
+
+# Analyses
+
+## Speaker Training
+
+### Proportion Looking - Timecourse
+
+First summarize by participant...
+
+```{r}
+summarize_by_subj_timecourse <- final_training_data |> 
+  # only valid looks
+       filter(!is.na(condAOI), condAOI!="other") |> 
+  #in the appropriate time windows
+  filter(TimeBinMs < 3000, TimeBinMs >= -2000) |> 
+  group_by(subject_id, TimeBinMs, speaker_type_factor) |> 
+  mutate(N_total = n()) |> 
+  group_by(subject_id, TimeBinMs, condAOI_factor, N_total, speaker_type_factor) |> 
+  summarize(N_AOI = n()) |> 
+  mutate(proportion_aoi = N_AOI/N_total)
+```
+
+Then summarize across participants...
+
+```{r}
+summarize_across_subj_timecourse <- summarize_by_subj_timecourse %>%
+  group_by(TimeBinMs, condAOI_factor, speaker_type_factor) %>%
+  summarize(N=sum(!is.na(proportion_aoi)),
+         accuracy=mean(proportion_aoi,na.rm=TRUE),
+         sd_accuracy=sd(proportion_aoi,na.rm=TRUE))
+
+summarize_across_subj_timecourse$alpha_factor <- factor(summarize_across_subj_timecourse$condAOI_factor,
+                                levels = c("Reliable Sp.", "Unreliable Sp.", 
+                                           "Target Obj.", "Distractor Obj."),
+                                labels = c(0, 0, 1, 1))
+```
+
+#### Main Timecourse Plot
+
+```{r}
+proportion_timecourse <- summarize_across_subj_timecourse |> 
+  #filter(condAOI_factor %in% c()) |> 
+  #filter(condAOI_factor %in% c("Reliable Sp.", "Unreliable Sp.")) |> 
+  #filter(condAOI_factor %in% c("Reliable Sp.", "Unreliable Sp.")) |> 
+  ggplot(aes(TimeBinMs, accuracy, color = condAOI_factor)) +
+  # raw participant line
+  geom_line(alpha = .5, size = 2) +
+  # summary line
+  geom_line(stat="smooth", aes(alpha = alpha_factor), size = 2) +
+  geom_hline(yintercept = .25, alpha = .5, linetype="dashed") +
+  geom_vline(xintercept=0)+
+  geom_vline(xintercept=300,linetype="dotted") + 
+  facet_grid(cols = vars(speaker_type_factor)) + 
+  # theming
+  theme_minimal() + 
+  ylim(0, 1) + 
+  xlim(-2000, 3000) +
+  labs(x = "Time (ms)",
+       y = "Proportion",
+       title = "Proportion of Looks to Area",
+       color = "Area of Interest") +
+    scale_color_manual(values = c("Reliable Sp."="#3a86ff",
+                                "Unreliable Sp."="#ff006e",
+                                "Target Obj." = "#595959",
+                                "Distractor Obj." = "#ffbe0b")) +
+  scale_alpha_discrete(range = c(0.33, 1), guide = 'none') +
+  talk_theme +
+  theme(legend.position = "none")
+
+plot_name <- "proportion_timecourse"
+proportion_timecourse
+ggsave(paste0(write_figures, plot_name, "/2.pdf"), width = 10, height = 5)
+```
+
+```{r}
+# stacked
+proportion_timecourse + facet_grid(rows = vars(speaker_type_factor))
+```
+
+### Proportion Looking - Bars
+
+#### Main Barplot
+
+First summarize by participant
+
+```{r}
+summarize_by_subj_proportion <- final_training_data |> 
+  # only valid looks
+       filter(!is.na(condAOI), condAOI!="other") |> 
+  #in the appropriate time windows
+  filter(TimeBinMs < 3000, TimeBinMs > 300) |> 
+  group_by(subject_id, speaker_type_factor, condAOI_factor) |> 
+  summarize(N_total = n()) |> 
+  mutate(prop = N_total / sum(N_total))
+
+#Across participants
+
+summarize_across_subj_proportion <- summarize_by_subj_proportion |> 
+  group_by(condAOI_factor, speaker_type_factor) |> 
+  summarize(N=sum(!is.na(prop)),
+         accuracy=mean(prop,na.rm=TRUE),
+         sd_accuracy=sd(prop,na.rm=TRUE))
+
+proportion_bars <- summarize_across_subj_proportion |> 
+  ggplot(aes(x = condAOI_factor, y = accuracy, fill = condAOI_factor)) +
+  geom_bar(stat = "identity") +
+  geom_point(data = summarize_by_subj_proportion, aes(x = condAOI_factor, y = prop), alpha = .25) + 
+  geom_hline(yintercept = .25, linetype = "dashed", alpha = .75) +
+  theme_minimal() + 
+  scale_fill_manual(values = c("Reliable Sp."="#3a86ff",
+                                "Unreliable Sp."="#ff006e",
+                                "Target Obj." = "#595959",
+                                "Distractor Obj." = "#ffbe0b")) + 
+  ylim(0,1) +
+  labs(x = "AOI",
+       y = "Proportion",
+       title = "Proportion Looking at AOI",
+       fill = "AOI") + 
+  talk_theme +
+  theme(legend.position = "none")
+
+proportion_bars
+```
+
+
+```{r}
+proportion_bars +  facet_grid(rows = vars(speaker_type_factor)) 
+ggsave(paste0(write_figures, "proportion_training_rows.pdf"), width = 10, height = 5)
+```
+
+```{r}
+proportion_bars +  facet_grid(cols = vars(speaker_type_factor))
+ggsave(paste0(write_figures, "proportion_training_cols.pdf"), width = 10, height = 5)
+```
+
+## Active Sampling
+
+Add identifiers for timepoints that are the first look to either of the two speakers (for a duration > 300ms)
+
+```{r}
+final_active_data$prevcondAOI = dplyr::lag(final_active_data$condAOI)
+
+look_durations <- final_active_data |> 
+  filter(is.na(Event),
+         TimeBinMs >= 0, TimeBinMs < 21000) |> 
+  mutate(TimeBinMS_contingent = TimeBinMs - 1000) |> 
+  select(subjCode, TimeBinMs, trialIDfactor, condAOI_factor)  |> 
+  group_by(subjCode, trialIDfactor) |> 
+  mutate(LookBin = data.table::rleid(condAOI_factor)) |> 
+  group_by(subjCode, trialIDfactor, LookBin, condAOI_factor) |> 
+  mutate(start_time = min(TimeBinMs),
+            end_time = max(TimeBinMs),
+            duration = end_time - start_time)
+
+first_look <- look_durations |> 
+  filter(!is.na(condAOI_factor), condAOI_factor!="other", duration >= 300) |> arrange(LookBin) |> 
+  group_by(subjCode, trialIDfactor, condAOI_factor) |> 
+  slice(1) |> 
+  mutate(first_look_bin = T) |> 
+  select(-TimeBinMs)
+
+look_durations <- look_durations |> 
+  left_join(first_look) |> 
+  replace_na(list(first_look_bin = F))
+
+first_look_by_participant <- first_look |> 
+  group_by(condAOI_factor, trialIDfactor) |> 
+  summarize(mean_start_time = mean(start_time),
+            sd_start_time = sd(start_time),
+            mean_duration = mean(duration),
+            sd_duration = sd(duration))
+
+```
+
+
+### Sampling Behavior
+
+Full Plot
+
+```{r}
+sample_teme <- talk_theme + 
+  theme(axis.text.y = element_blank(),
+        axis.title.x = element_text(size = 18),
+        axis.ticks.y = element_blank(), 
+        panel.spacing.y = unit(.1, "lines"),
+        panel.spacing.x = unit(.5, "lines"),
+        strip.background = element_blank(),
+        plot.title = element_blank(),
+        plot.subtitle = element_blank(),
+        legend.position = "none",
+        axis.title.y = element_blank(),
+        strip.text.y.right = element_text(angle = 0),
+        strip.text.x = element_text(size = 18))
+
+look_durations$alpha_factor <- factor(look_durations$first_look_bin,
+                                levels = c(FALSE, TRUE),
+                                labels = c(0, 1))
+
+look_durations |> 
+  left_join(final_active_data |> select(subject_id, subjCode) |> distinct()) |> 
+  filter(!is.na(condAOI_factor))  |> 
+  ggplot(aes(x = TimeBinMs/1000, y = condAOI_factor, color = condAOI_factor)) + 
+  geom_point(aes(alpha = alpha_factor)) + 
+  #theme_classic() + 
+  facet_grid(rows = vars(subject_id), cols = vars(trialIDfactor)) + 
+  #guides(color = guide_legend(override.aes = list(alpha = 1))) + 
+  geom_vline(xintercept = 1, linetype = "dotted") + 
+  labs(title = "Sampling Over Time", y = "AOI", x = "Time (s)", color = "AOI") + 
+  theme_bw() + 
+  xlim(0, 21) +
+  scale_color_manual(values = c("Reliable"="#3a86ff",
+                                "Unreliable"="#ff006e")) +
+  sample_teme +
+    theme(strip.text.y.right = element_text(angle = 0, size = 12)) +
+  scale_alpha_discrete(range = c(.005, .05), guide = 'none')
+
+plot_name = "sampling_behavior"
+
+ggsave(paste0(write_figures, plot_name, "/final-2.pdf"), width = 9.5, height = 6.5)
+ggsave(paste0(write_figures, plot_name, "/final-2.jpg"), width = 9.5, height = 6.5)
+
+```
+
+
+```{r}
+look_durations |> 
+  left_join(final_active_data |> select(subject_id, subjCode) |> distinct()) |> 
+  filter(!is.na(condAOI_factor), subject_id == 2)  |> 
+  ggplot(aes(x = TimeBinMs/1000, y = condAOI_factor, color = condAOI_factor)) + 
+  geom_point(aes(alpha = alpha_factor), size = 1) + 
+  #theme_classic() + 
+  facet_grid(rows = vars(subject_id), cols = vars(trialIDfactor)) + 
+  #guides(color = guide_legend(override.aes = list(alpha = 1))) + 
+  geom_vline(xintercept = 1, linetype = "dotted", size = 1.25) + 
+  labs(title = "Sampling Over Time", y = "AOI", x = "Time (s)", color = "AOI") + 
+  theme_bw() + 
+  xlim(0, 21) +
+  scale_color_manual(values = c("Reliable"="#3a86ff",
+                                "Unreliable"="#ff006e")) +
+  sample_teme +
+  theme(legend.position = "none") +
+  scale_alpha_discrete(range = c(.05, .05), guide = 'none') + 
+  xlim(0, 20)
+
+plot_name = "sampling_behavior"
+
+ggsave(paste0(write_figures, plot_name, "/2.pdf"), width = 9.5, height = 1.3)
+```
+
+
+### Duration
+
+Collapsed Trials
+
+```{r}
+small_plot_theme <- theme(plot.title = element_text(size = 16),
+        axis.text = element_text(size = 12),
+        axis.title = element_text(size = 16),
+        axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_blank(),
+        legend.position = "none")
+
+
+sample_duration_by_subj <- final_active_data |> 
+  filter(TimeBinMs > 1000, TimeBinMs < 21000) |> # restrict to analysis window
+  filter(!is.na(condAOI) & condAOI != "other") |>  #only valid looks
+  group_by(subjCode, condAOI_factor, trial_type_id) |> 
+  summarize(n_frames = n()) |> 
+  mutate(total_time_ms = n_frames*16.6667,
+         total_time_s = total_time_ms/1000) |> 
+  group_by(subjCode, condAOI_factor) |> 
+  summarize(mean_sample_time_ms = mean(total_time_ms, rm.na = T),
+            mean_sample_time_s = mean(total_time_s, rm.na = T))
+
+#TODO: do mean, not full
+
+sample_duration_across_subj <- 
+  sample_duration_by_subj |> 
+  group_by(condAOI_factor) |> 
+  summarize(mean_duration = mean(mean_sample_time_s))
+  
+
+sample_duration_across_subj |> 
+  ggplot(aes(x = condAOI_factor, y = mean_duration, fill = condAOI_factor)) + 
+  #geom_point(data = sample_duration_by_subj |> filter(subjCode == "BI101t"), 
+  #           aes(x = condAOI_factor, y = mean_sample_time_s), alpha = 1) + 
+  #geom_line(data = sample_duration_by_subj |> filter(subjCode == "BI101t"), 
+  #          aes(x = condAOI_factor, y = mean_sample_time_s, group = subjCode), alpha = .75) +
+  geom_bar(stat = "identity") + 
+  geom_point(data = sample_duration_by_subj, 
+             aes(x = condAOI_factor, y = mean_sample_time_s), alpha = .25) + 
+  geom_line(data = sample_duration_by_subj, 
+            aes(x = condAOI_factor, y = mean_sample_time_s, group = subjCode), alpha = .2) +
+  theme_minimal() + 
+  labs(x = "Sampled Speaker", 
+       y = "Total Sample Time (s)",
+       title = "Time Sampled per Speaker") + 
+   scale_fill_manual(values = c("Unreliable"="#ff006e",
+                                "Reliable"="#3a86ff"))+
+  
+small_plot_theme +
+  ylim(0, 20)
+  
+
+
+plot_name = "total_sample_dur"
+
+ggsave(paste0(write_figures, plot_name, "/2.pdf"), width = 3.5, height = 2.5)
+
+```
+
+
+#### Difference Across Windows
+
+### First Look
+
+```{r}
+first_look_plot <- look_durations |> 
+  filter(!is.na(condAOI_factor), condAOI_factor!="other", duration >= 300) |> arrange(LookBin) |> 
+  group_by(subjCode, trialIDfactor, condAOI_factor) |> 
+  slice(1)
+
+first_look_by_participant <- first_look_plot |> 
+  group_by(subjCode, condAOI_factor) |> 
+  summarize(mean_start_time = mean(start_time),
+            sd_start_time = sd(start_time),
+            mean_duration = mean(duration),
+            sd_duration = sd(duration))
+
+first_look_across_participant <- first_look_by_participant |> 
+  group_by(condAOI_factor) |> 
+    summarize(mean_start_time = mean(mean_start_time),
+            sd_start_time = sd(mean_start_time),
+            mean_duration = mean(mean_duration),
+            sd_duration = sd(mean_duration))
+
+
+first_look_across_participant |> 
+  ggplot(aes(y = mean_start_time/1000, x = condAOI_factor, fill = condAOI_factor)) + 
+  #  geom_point(data = first_look_by_participant |> filter(subjCode == "BI101t"), aes(y = mean_start_time/1000), alpha = 1) + 
+  #  geom_line(data = first_look_by_participant|> filter(subjCode == "BI101t"), 
+   #         aes(x = condAOI_factor, y = mean_start_time/1000, group = subjCode), alpha = .75) +
+  geom_bar(stat = "identity") + 
+  #facet_grid(cols = vars(trialIDfactor)) + 
+  geom_point(data = first_look_by_participant, aes(y = mean_start_time/1000), alpha = .3) + 
+    geom_line(data = first_look_by_participant, aes(x = condAOI_factor, y = mean_start_time/1000, group = subjCode), alpha = .2) +
+  theme_minimal() + 
+    scale_fill_manual(values = c("Reliable"="#3a86ff",
+                                "Unreliable"="#ff006e")) +
+  labs(x = "Sampled Speaker", 
+       y = "Onset of First Fixation (s)",
+       title = "Onset of First Fixation") + 
+  theme_minimal() + 
+   scale_fill_manual(values = c("Unreliable"="#ff006e",
+                                "Reliable"="#3a86ff"))+
+small_plot_theme +
+  ylim(0, 6)
+
+plot_name = "sample_fixation"
+
+ggsave(paste0(write_figures, plot_name, "/2.pdf"), width = 3.5, height = 2.5)
+
+```
+
