@@ -1,1 +1,0 @@
-BIperswon2	keyboard	m	26	3	JJM	1	0	yes	input	training	2	1.0	reliable	exp2	left	left	ball	car	see_ball	exp2_left_see_ball	5000.0	None	None	None	None	None	None	None	None	None	None	None	2	112016.16130000184	117850.82049999983	5834.659199997986
