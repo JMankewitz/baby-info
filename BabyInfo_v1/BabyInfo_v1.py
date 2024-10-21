@@ -121,8 +121,8 @@ class Exp:
 				fileOpened = False
 				popupError('That subject code already exists!')
 
-		self.disp = libscreen.Display(disptype='psychopy', fgc="black", bgc="black", screennr=self.subjVariables['mainMonitor'])
-		self.blackScreen = libscreen.Screen(fgc="black", bgc="black")
+		self.disp = libscreen.Display(disptype='psychopy', fgc="Light Gray", bgc="Light Gray", screennr=self.subjVariables['mainMonitor'])
+		self.blackScreen = libscreen.Screen(fgc="Light Gray", bgc="Light Gray")
 		self.win = pygaze.expdisplay
 		# Stim Paths
 		self.imagePath = self.path + '/stimuli/images/'
@@ -171,7 +171,7 @@ class ExpPresentation(Exp):
 	def initializeExperiment(self):
 		
 		# Loading Files Screen
-		loadScreen = libscreen.Screen()
+		loadScreen = libscreen.Screen(fgc="Light Gray", bgc="Light Gray")
 		loadScreen.draw_text(text = "Loading Files...", color = "white", fontsize = 48)
 		self.experiment.disp.fill(loadScreen)
 		self.experiment.disp.show()
@@ -233,7 +233,7 @@ class ExpPresentation(Exp):
 		# Build Screens for Image Based Displays (Initial Screen and Active Stuff)
 
 		# INITIAL SCREEN #
-		self.initialScreen = libscreen.Screen()
+		self.initialScreen = libscreen.Screen(fgc="Light Gray", bgc="Light Gray")
 		self.initialImageName = self.experiment.imagePath + "bunnies.gif"
 		initialImage = visual.ImageStim(self.experiment.win, self.initialImageName, mask=None, interpolate=True)
 		initialImage.setPos(self.pos['center'])
@@ -310,7 +310,7 @@ class ExpPresentation(Exp):
 			# position in center of screen
 			curPic.pos = self.pos['center']
 			# create screen
-			agScreen = libscreen.Screen()
+			agScreen = libscreen.Screen(fgc="Light Gray", bgc="Light Gray")
 			# build screen
 			buildScreenPsychoPy(agScreen, [curPic])
 
@@ -506,12 +506,12 @@ class ExpPresentation(Exp):
 
 
 		# Initialize Screens
-		self.activeGrayScreen = libscreen.Screen(disptype='psychopy')
-		self.activeColorScreen = libscreen.Screen(disptype='psychopy')
+		self.activeGrayScreen = libscreen.Screen(disptype='psychopy', fgc="Light Gray", bgc="Light Gray")
+		self.activeColorScreen = libscreen.Screen(disptype='psychopy', fgc="Light Gray", bgc="Light Gray")
 
 		# activated screens
-		self.activeLeftScreen = libscreen.Screen(disptype='psychopy')
-		self.activeRightScreen = libscreen.Screen(disptype='psychopy')
+		self.activeLeftScreen = libscreen.Screen(disptype='psychopy', fgc="Light Gray", bgc="Light Gray")
+		self.activeRightScreen = libscreen.Screen(disptype='psychopy', fgc="Light Gray", bgc="Light Gray")
 
 		#Active Gray
 		buildScreenPsychoPy(self.activeGrayScreen, [self.leftSpeakerGrayImage, self.rightSpeakerGrayImage])
@@ -883,7 +883,7 @@ class ExpPresentation(Exp):
 		curStar = self.stars['0'][0]
 		curStar.size = (self.x_length, self.y_length)
 		# create screen
-		endScreen = libscreen.Screen()
+		endScreen = libscreen.Screen(fgc="Light Gray", bgc="Light Gray")
 		# build screen
 		buildScreenPsychoPy(endScreen, [curStar])
 
