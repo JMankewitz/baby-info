@@ -1,0 +1,47 @@
+
+```{r}
+library(tidyverse)
+library(ggreveal)
+library(here)
+```
+
+## CDI Data
+
+```{r}
+cdi_data_raw <- read_csv(here("BabyInfo_v1/vocab_data/cdi_shortform/babyinfo_CDI_ShortForm_LevelB.csv"), skip=1)
+
+col_mapping <- tibble(
+  original_column = names(cdi_data_raw)
+) %>%
+  filter(str_detect(original_column, "-")) %>%
+  mutate(
+    # Extract the section before the first hyphen
+    section_id = str_trim(str_extract(original_column, "^[^-]+")),
+    
+    # Extract word after the last dash
+    item = str_trim(str_extract(original_column, "[^-]*$"))
+  )
+
+tidy_cdi <- cdi_data_raw %>%
+  # Select only the subject ID and the vocabulary response columns
+  select(subject_id, starts_with("says")) %>%
+  
+  # Convert to long format
+  pivot_longer(
+    cols = starts_with("says"),
+    names_to = "original_column",
+    values_to = "response"
+  ) %>%
+  
+  # Join with the column mapping to get the words
+  left_join(col_mapping, by = "original_column") |> 
+  mutate(knows_word = ifelse(is.na(response), FALSE, TRUE)) |> 
+  select(subject_id, item, knows_word)
+
+subj_cdi_counts <- tidy_cdi |> 
+  group_by(subject_id) |> 
+  summarize(n_know = sum(knows_word),
+            n_unknown = sum(!knows_word),
+            prop_know = n_know/(n_know+n_unknown))
+```
+

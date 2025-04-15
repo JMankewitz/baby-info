@@ -1,0 +1,202 @@
+---
+here()---
+title: "Exclusions"
+format: html
+editor: source
+---
+
+Exclusions based on the preregistered exclusions criteria
+
+```{r}
+library(here)
+library(tidyverse)
+
+read_file_path <- here("analysis/preprocessedGazeData/fullGazeData/v1/")
+write_file_location <- here("analysis/preprocessedGazeData/finalGazeData/v1")
+subj_data_path <- here('BabyInfo_v1/data/BabyInfo_SubjectLog_anonymized.csv')
+d_active_training <- read_csv(paste0(read_file_path, 'active_training_aois.csv'))
+d_training <- read_csv(paste0(read_file_path, "training_aois.csv"))
+d_active_test <- read_csv(paste0(read_file_path, "active_test_aois.csv"))
+
+subj_data <- read_csv(subj_data_path, show_col_types = FALSE) |> 
+  janitor::clean_names() |> 
+  rename(raw_subjCode= sub_num) %>% 
+  mutate(subjCode = ifelse(is.na(corrected_sub_num), raw_subjCode, corrected_sub_num))
+```
+
+# Eligibility
+
+Exclude any children outside of the age range (<22, >24m), or born < -28 days early. These participants should have been practice.
+```{r}
+subj_data_real <- subj_data %>% filter(age <= 24.5, age >= 22, days_e_l >= -28)
+
+excluded_prac <- subj_data %>% filter(age > 24.5 | age < 22 | days_e_l < -28)
+
+print("excluded: ")
+nrow(excluded_prac)
+print("remaining: ")
+nrow(subj_data_real)
+```
+# Data Quality
+
+How many children fussed out completely (no data for either active trial).
+
+All these participants ended, early so this looks fine! Restrict the subject log to just participants we have test data for.
+
+```{r}
+setdiff(subj_data_real %>% distinct(subjCode) %>% pull(), d_active_test %>% distinct(subjCode) %>% pull())
+
+subj_data_collected <- subj_data_real %>% inner_join(d_active_test %>% distinct(subjCode))
+
+print(paste0("attempted collection: N = ", nrow(subj_data_collected)))
+```
+
+# Exclude Participants with > 30% NA in BOTH active test trials:
+
+```{r}
+df1 <- subj_data_real %>% distinct(subjCode)
+df2 <- tibble("trialID" = c(1,2))
+df3 = tibble("LookAOI" = c(NA, "left_speaker", "right_speaker", "other"))
+full_set <- expand.grid(df1$subjCode, df2$trialID, df3$LookAOI) %>% rename("subjCode" = "Var1", "trialID" = "Var2", "LookAOI" = "Var3")
+
+start_times <- d_active_test %>% filter(Event == "startContingent") %>% 
+  select(subject_id, trialID, start_contingent_time = normalizedTimeStamp)
+end_times <- d_active_test %>% filter(Event == "stopScreen") %>% 
+  select(subject_id, trialID, end_contingent_time = normalizedTimeStamp)
+
+contingent_test_data <- d_active_test %>% left_join(start_times) %>% left_join(end_times) %>% 
+  filter(normalizedTimeStamp > start_contingent_time,
+         normalizedTimeStamp < end_contingent_time)
+
+AOI_frame_counts <- contingent_test_data |> 
+  group_by(subjCode, trialID, LookAOI) |> 
+  summarize(n = n())
+
+AOI_frame_counts <- full_set %>% left_join(AOI_frame_counts) %>% replace_na(list(n = 0))
+
+AOI_frame_props <- AOI_frame_counts %>% 
+  group_by(subjCode, trialID) |> 
+  mutate(total_n = sum(n)) |> ungroup() |> 
+  mutate(proportion_aoi = n/total_n)
+```
+
+```{r}
+# Remove trials with at least 30% data loss:
+trial_status <- AOI_frame_props |> 
+  filter(is.na(LookAOI)) |> 
+  mutate(kept = proportion_aoi < .30 & total_n > 0) |> 
+  group_by(subjCode) |> 
+  summarize(mean_prop_na = mean(proportion_aoi, na.rm = T),
+            n_kept_trials = sum(kept))
+
+subj_data_w_exclusions <- subj_data_collected |> 
+  left_join(trial_status) |> 
+  mutate(excluded_trials = n_kept_trials == 0,
+         excluded_keyboard = include == "keyboard",
+         excluded_fussed = (include == "no" & why_category == "fussed"),
+         excluded_track = (include == "no" & why_category == "track"),
+         excluded_other = (include == "no" & why_category == "other"))
+```
+
+```{r}
+# Ran on keyboard
+
+nrow(subj_data_w_exclusions |> filter(excluded_keyboard))
+
+subj_gc <- subj_data_w_exclusions |> filter(!excluded_keyboard)
+nrow(subj_gc)
+```
+
+```{r}
+# fussed out
+
+nrow(subj_gc |> filter(excluded_fussed))
+
+subj_attentive <- subj_gc |> filter(!excluded_fussed)
+nrow(subj_attentive)
+```
+
+```{r}
+nrow(subj_attentive |> filter(excluded_trials))
+subj_quant_quality <- subj_attentive |> filter(!excluded_trials)
+nrow(subj_quant_quality)
+```
+
+```{r}
+nrow(subj_quant_quality |> filter(excluded_track))
+subj_qual_quality <- subj_quant_quality |> filter(!excluded_track)
+nrow(subj_qual_quality)
+```
+
+```{r}
+nrow(subj_qual_quality |> filter(excluded_other))
+subj_final <- subj_qual_quality |> filter(!excluded_other)
+nrow(subj_final)
+
+final_participants <- subj_final |> pull(subjCode)
+```
+
+
+Exclude participants who were marked as unusable in the subject log, based on the researcher. 
+
+For any participants who are marked as unusable because of video quality, only drop them if they're missing sufficient data (vs just trusting the researcher's "intuition")
+
+
+```{r}
+d_active_training_remaining <- d_active_training |> filter(subjCode %in% final_participants)
+d_active_training_remaining |> pull(subjCode) |> table()
+
+d_active_training_remaining |> write_csv(file = here(write_file_location, "active_training_aois.csv"))
+
+d_training_remaining <- d_training |> filter(subjCode %in% final_participants)
+d_training_remaining |> pull(subjCode) |> table()
+
+d_training_remaining |> write_csv(file = here(write_file_location, "training_aois.csv"))
+
+d_active_test_remaining <- d_active_test |> filter(subjCode %in% final_participants) 
+d_active_test_remaining |> pull(subjCode) |> table()
+
+d_active_test_remaining |> write_csv(file = here(write_file_location, "active_test_aois.csv"))
+
+```
+
+```{r}
+remaining_subject_data <- subj_data |> filter(subjCode %in% final_participants)
+
+mean(remaining_subject_data$age)
+
+sd(remaining_subject_data$age)
+
+min(remaining_subject_data$age)
+max(remaining_subject_data$age)
+
+table(remaining_subject_data$sex)
+```
+
+
+```{r}
+library(ggplot2)
+
+# is there consistancy in participants for the amount of NA in the GC task
+
+proportion_by_aoi <- AOI_frame_props %>%  pivot_wider(names_from = trialID, values_from = c(n:proportion_aoi))
+
+
+proportion_by_aoi %>% ggplot(aes(x = proportion_aoi_1, y = proportion_aoi_2)) + 
+  geom_point() +
+  geom_abline(aes(slope=1, intercept = 0), linetype = "dashed")+
+  facet_wrap(~LookAOI, scales = "free") + 
+  theme_minimal() +
+  labs(x = "Trial 1 Proportion of AOI", y = "Trial 2 Prop AOI", title = "Proportion of AOI by Trial",
+       subtitle = "Participants are usually internally consistent in where they're looking")
+
+proportion_by_aoi %>% 
+  filter(is.na(LookAOI)) %>% 
+  ggplot(aes(x = proportion_aoi_1, y = proportion_aoi_2)) + 
+  geom_point() +
+  geom_abline(aes(slope=1, intercept = 0), linetype = "dashed")+
+  geom_vline(aes(xintercept = .30)) +
+  geom_hline(aes(yintercept = .30)) +
+  theme_minimal() +
+  labs(x = "Trial 1 Missing Data", y = "Trial 2 Missing Data", title = "Prop Missing AOI", subtitle = "Most data loss is in the second trial")
+```

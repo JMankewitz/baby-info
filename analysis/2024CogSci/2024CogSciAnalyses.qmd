@@ -10,18 +10,22 @@ library(here)
 library(tidyverse)
 library(cowplot)
 
-read_file_path <- here("analysis/preprocessedGazeData/cogsci2024/")
+read_file_path <- here("analysis/preprocessedGazeData/v1/")
 write_figures <- here("analysis/2024CogSci/newfigures/")
 
 d_active_training <- read_csv(paste0(read_file_path, 'active_training_aois.csv'))
 d_training <- read_csv(paste0(read_file_path, "training_aois.csv"))
 d_active_test <- read_csv(paste0(read_file_path, "active_test_aois.csv"))
 
-file_name <- here("analysis/2024CogSci/")
+file_name <- here("analysis/v1/")
 
-subj_data <- read_csv(paste0(read_file_path, 'subject_log.csv'), show_col_types = FALSE) |> 
+subj_data <- read_csv(paste0(read_file_path, 'SubjectLog.csv'), show_col_types = FALSE) |> 
   janitor::clean_names() |> rename(subjCode= sub_num)
 ```
+```{r}
+d_active_test
+```
+
 
 ```{r}
 group_colors <- c("Reliable Sp." = "#2E9093", "Unreliable Sp." = "#920530", 
@@ -56,7 +60,7 @@ calibration_error <-subj_data |> filter(include == "no", why_category == "track"
 length(calibration_error)
 
 
-remaining_participants <- subj_data |> filter(include == "yes" | include == "yes") |> pull(subjCode)
+remaining_participants <- subj_data |> filter(include == "yes") |> pull(subjCode)
 length(remaining_participants)
 
 nrow(subj_data |> filter(include == "yes"))
@@ -167,6 +171,7 @@ theme_text <- theme(plot.title = element_text(size = 32),
         legend.position = "right",
         legend.text = element_text(size = 18),
         legend.title = element_text(size = 24))
+
 plot_name <- "proportion_duration_bars"
 
 summarize_by_subj <- final_training_data |> 
@@ -433,6 +438,11 @@ sample_duration_bar <- sample_duration_by_subj |>
 
 sample_duration_bar
 ```
+
+```{r}
+
+```
+
 
 ### Sample Duration (first 10 seconds)
 
@@ -778,8 +788,10 @@ first_look |>
 ## "Real Stats"
 
 ```{r}
+# BI148, trial 2
+
 sample_duration_by_subj <- final_active_test_remaining |> 
-  filter(TimeBinMs > 1000, TimeBinMs < 6000) |> # restrict to analysis window
+  filter(TimeBinMs > 1000, TimeBinMs < 6000, subjCode != "BI148") |> # restrict to analysis window
   filter(!is.na(condAOI) & condAOI != "other") |>  #only valid looks
   group_by(subjCode, condAOI_factor, trialIDfactor) |> 
   summarize(n_frames = n()) |> 
@@ -790,10 +802,11 @@ sample_duration_by_subj <- final_active_test_remaining |>
 
 library(lme4)
 library(lmerTest)
-sample_duration_by_subj$condAOI_centered <- ifelse(sample_duration_by_subj$condAOI_factor == "Reliable", .5, -.5)
+sample_duration_by_subj$condAOI_centered <- ifelse(sample_duration_by_subj$condAOI_factor == "Reliable", 0, 1)
 sample_duration_by_subj$age_mean_centered <- sample_duration_by_subj$age - mean(sample_duration_by_subj$age, na.rm = T)
+sample_duration_by_subj$trial_centered <- ifelse(sample_duration_by_subj$trialIDfactor == "Trial 1", -.5, .5)
 
-model <- lmer(total_time_ms ~ condAOI_centered * age_mean_centered + (1 | subjCode), data = sample_duration_by_subj)
+model <- lmer(scale(total_time_s) ~ condAOI_centered + (0 + condAOI_centered | subjCode), data = sample_duration_by_subj, control = lmerControl(optimizer = "bobyqa"))
 summary(model)
 ```
 

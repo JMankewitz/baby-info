@@ -31,9 +31,10 @@ library(tidyverse)
 source("01_preprocessGazeData.R")
 source("Pygaze_InterpolateAOIHits.R")
 
-eyetracking_data_path <- "/Users/jessicamankewitz/projects/baby-info/BabyInfo_v1/eyetrackingData"
+
+eyetracking_data_path <- here("BabyInfo_v1/eyetrackingData")
 trials_path <- here('BabyInfo_v1/data')
-write_file_location <- "preprocessedGazeData/cogsci2024/"
+write_file_location <- "preprocessedGazeData/fullGazeData/v1"
 ```
 
 The following code reads each .tsv, extracts the following columns:
@@ -89,6 +90,7 @@ d_full_xy <- d_full_raw |>
 ```{r}
 d_full_xy |> 
   ggplot(aes(x = GazePointXMean, y = GazePointYMean, color = as.factor(subjCode))) +
+  theme(legend.position = "none") +
   geom_point(alpha = .25)
 ```
 
@@ -550,8 +552,8 @@ d_final_training_aoi_clean <- d_final_training_aoi |>  left_join(d_final_trainin
 
 ```{r}
 
-d_final_active_training_aoi_clean |> write_csv(file = paste0("/Users/jessicamankewitz/projects/baby-info/analysis/", write_file_location, "active_training_aois.csv"))
-d_final_training_aoi_clean |> write_csv(file = paste0("/Users/jessicamankewitz/projects/baby-info/analysis/", write_file_location, "training_aois.csv"))
-d_final_test_aoi_clean |> write_csv(file = paste0("/Users/jessicamankewitz/projects/baby-info/analysis/", write_file_location, "active_test_aois.csv"))
+d_final_active_training_aoi_clean |> write_csv(file = here("analysis", write_file_location, "active_training_aois.csv"))
+d_final_training_aoi_clean |> write_csv(file = here("analysis", write_file_location, "training_aois.csv"))
+d_final_test_aoi_clean |> write_csv(file = here("analysis", write_file_location, "active_test_aois.csv"))
 
 ```
